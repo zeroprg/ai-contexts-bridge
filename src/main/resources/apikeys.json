@@ -1,0 +1,30 @@
+[
+    {
+      "keyId": "api_key_1",
+      "keyValue": "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",
+      "name": "ChatGPT",
+      "uri": "https://api.openai.com/v1/engines/davinci/completions",
+      "homepage": "https://api.openai.com/",
+      "userId": "zeroprg@gmail.com",
+      "totalCost": 0.0
+    },
+    {
+      "keyId": "api_key_2",
+      "keyValue": "ChatGPT API key",
+      "name": "ChatGPT",
+      "uri": "https://api.openai.com/v1/engines/davinci/completions",
+      "homepage": "https://api.openai.com/",
+      "userId": "fkurka@gmail.com",
+      "totalCost": 0.0
+    },
+    {
+      "keyId": "api_key_3",
+      "keyValue": "key3_value",
+      "name": "Google Speech-to-Text API Key",
+      "uri": "https://cloud.google.com/speech-to-text/pricing",
+      "homepage": "https://cloud.google.com/speech-to-text/pricing",
+      "userId": "zeroprg@gmail.com",
+      "totalCost": 0.0
+    }
+  ]
+  

@@ -1,0 +1,25 @@
+[
+    {
+        "name": "Vitaly Arkhipov",
+        "email": "zeroprg@gmail.com",
+        "roles": [
+            "ROLE_APIKEY_MANAGER",
+            "ROLE_SITE_ADMINISTRATOR",
+            "ROLE_CLIENT_ADMINISTRATOR",
+            "ROLE_CUSTONMER"
+        ],
+        "id": 116459301105333501928
+    },
+    {
+        "name": "Frank Kurka",
+        "email": "fkurka@gmail.com",
+        "roles": [
+            "ROLE_APIKEY_MANAGER",
+            "ROLE_SITE_ADMINISTRATOR",
+            "ROLE_CLIENT_ADMINISTRATOR",
+            "ROLE_CUSTONMER"
+        ],
+        "id": 2
+    }    
+    
+]

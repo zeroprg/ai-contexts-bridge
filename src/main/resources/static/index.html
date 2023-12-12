@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        const getCookie = (name) => {
+             const cookieArray = document.cookie.split(';');
+             for (let i = 0; i < cookieArray.length; i++) {
+                 const cookiePair = cookieArray[i].trim().split('=');
+                 if (cookiePair[0] === name) {
+                     return decodeURIComponent(cookiePair[1]);
+                 }
+             }
+             return null;
+         };
+ 
+         // Assuming getCookie is defined and accessible globally
+         function checkSessionAndDisplayLink() {
+             var sessionId = getCookie('sessionId');
+             var infoParagraph = document.getElementById('infoParagraph');            
+                        
+            infoParagraph2.innerHTML = 'For more information, please visit the <a href="/swagger-ui">Swagger UI</a> page.';             
+             
+            if (getCookie('sessionId')) {     
+                    infoParagraph1.innerHTML = 'RUN application <a href="http://localhost:3000">RUN</a> page.'; 
+            }
+
+            
+         }
+ 
+         // Call the function after the DOM is fully loaded
+         document.addEventListener('DOMContentLoaded', checkSessionAndDisplayLink);       
+     </script>   
+    <title>Project Overview</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 90%;
+            margin: auto;
+            overflow: hidden;
+        }
+        .card {
+            background: #fff;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h2, h3 {
+            color: #333;
+        }
+        p {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Welcome to tothemoon.chat <p style="color: #666;">Version 1.0.0</p></h1>
+            <p>Created by: <a href="http://bloberryconsulting.com">Bloberry Consulting</a></p>
+            
+            <p>This is the landing page of the application. Navigate through the app to explore its features.</p>
+            <p id="infoParagraph1">Loading information...</p>
+            <p id="infoParagraph2">Loading information...</p>
+        </div>
+        <div class="card">
+            <h2>Description</h2>
+            <p>This project is a web-based application designed to manage user information and API interactions. The 'ApiController' handles various API-related functionalities, including viewing, creating, and managing API keys, client profiles, and customer queries. The 'UserController' focuses on user-related operations, such as retrieving user information, selecting APIs for users, and assigning roles. Secure access is enforced through different roles, ensuring that each endpoint is accessed only by authorized users. The communication flow is designed to be straightforward, with clear endpoints for each specific task.</p>
+        </div>
+ 
+        <!-- ApiController -->
+        <div class="card">
+            <h2>ApiController</h2>
+            <h3>Endpoints:</h3>
+            <p>GET /api/v1/keys/manage: View API keys</p>
+            <p>POST /api/v1/keys/manage: Create API key</p>
+            <p>GET /api/v1/client/profiles: View all profiles</p>
+            <p>GET /api/v1/client/{clientId}/profile: View client profile</p>
+            <p>POST /api/v1/api/v1/client/profile: Manage client profile</p>
+            <p>PUT /api/v1/client/profile: Update client profile</p>
+            <p>GET /api/v1/customer/query: Query customer information</p>
+            <h3>Methods:</h3>
+            <p>viewApiKeys, createApiKey, viewAllProfiles, viewClientProfile, manageClientProfile, updateClient, queryCustomer</p>
+            <h3>Security Roles:</h3>
+            <p>ROLE_CUSTOMER, ROLE_SITE_ADMINISTRATOR, ROLE_CLIENT_ADMINISTRATOR</p>
+        </div>
+        <!-- UserController -->
+        <div class="card">
+            <h2>UserController</h2>
+            <h3>Endpoints:</h3>
+            <p>GET /user/info: Get user information</p>
+            <p>PUT /user/{apiKey}/selectAPI: Select an API for a user</p>
+            <p>PUT /user/{userId}/attach/{clientId}: Attach a user to a client</p>
+            <p>GET /user/findByEmail: Find user by email</p>
+            <p>GET /user/findByName: Find user by name</p>
+            <p>POST /user/assignRole: Assign role to user</p>
+            <h3>Methods:</h3>
+            <p>getUserInfo, selectAPI, attachUserToClient, getUserByEmail, getUserByName, assignRoleToUser</p>
+            <h3>Security Roles:</h3>
+            <p>ROLE_CLIENT_ADMINISTRATOR, ROLE_SITE_ADMINISTRATOR, ROLE_APIKEY_MANAGER</p>
+        </div>
+    </div>
+</body>
+</html>
