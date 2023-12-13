@@ -12,7 +12,7 @@ VOLUME /tmp
 EXPOSE 8080
 
 # The application's jar file
-ARG JAR_FILE=target/ai-contexts-bridge.jar
+ARG JAR_FILE=target/ai-contexts-bridge-0.0.1-SNAPSHOT.jar
 
 # Add the application's jar to the container
 ADD ${JAR_FILE} ai-contexts-bridge.jar
