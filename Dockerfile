@@ -2,7 +2,7 @@
 FROM oracle/graalvm-ce:17
 
 # Add Maintainer Info
-LABEL maintainer="your-email@example.com"
+LABEL maintainer="support@tothemoon.chat"
 
 # Add a volume pointing to /tmp
 VOLUME /tmp
