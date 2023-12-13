@@ -1,5 +1,6 @@
 # Start with a base image containing Java runtime with GraalVM version 17
-FROM oracle/graalvm-ce:17
+#FROM oracle/graalvm-ce:17
+FROM ghcr.io/graalvm/graalvm-ce:ol7-java17
 
 # Add Maintainer Info
 LABEL maintainer="support@tothemoon.chat"
