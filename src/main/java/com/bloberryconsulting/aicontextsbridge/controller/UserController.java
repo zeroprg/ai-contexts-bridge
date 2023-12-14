@@ -33,7 +33,7 @@ import static com.bloberryconsulting.aicontextsbridge.security.SecurityConfigura
 
 @RestController
 @RequestMapping("/user")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "${ui.uri}", allowCredentials = "true")
 public class UserController {
     private final UserService userService;
 

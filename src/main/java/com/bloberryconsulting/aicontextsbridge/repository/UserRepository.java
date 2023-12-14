@@ -112,7 +112,7 @@ public class UserRepository {
       
         Collection<ApiKey> keys = hazelcastService.retrieveAll(API_KEYS_MAP);
     return keys.stream()
-                .filter(apiKey -> userId.equals(apiKey.getUserId()))
+                .filter(apiKey -> userId.equals(apiKey.getUserId()) || apiKey.isPublicAccessed())
                 .collect(Collectors.toList());
     }
 

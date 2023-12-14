@@ -32,7 +32,7 @@ import static com.bloberryconsulting.aicontextsbridge.security.SecurityConfigura
 
 @RestController
 @RequestMapping("/api/v1")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "${ui.uri}", allowCredentials = "true")
 public class ApiController {
   
     private final UserRepository userRepository;

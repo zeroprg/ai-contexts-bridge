@@ -2,6 +2,7 @@ package com.bloberryconsulting.aicontextsbridge.security;
 
 import java.util.Arrays;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -18,6 +19,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfiguration {
+    @Value("${ui.uri}")
+    private String uiUri;
 
     public final static String ROLE_CUSTOMER_DESCR = " This operation is only available to users with the 'ROLE_CUSTOMER' role, which typically includes only a new API creation/selection/query";
     public final static String ROLE_SITE_ADMINISTRATOR_DESCR = " This operation is only available to users with the 'ROLE_SITE_ADMINISTRATOR' role, which typically includes creation/update/query all site profiles except not owned APIs ";
@@ -82,7 +85,7 @@ public class SecurityConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000")); // Specify your frontend origin
+        configuration.setAllowedOrigins(Arrays.asList(uiUri)); // Specify your frontend origin
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
         configuration.setAllowCredentials(true); // Important for cookies
