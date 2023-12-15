@@ -1,0 +1,1 @@
+ docker build --push -t zeroprg/ai-contexts-bridge .
