@@ -15,7 +15,7 @@ EXPOSE 8080
 ARG JAR_FILE=target/ai-contexts-bridge-0.0.1-SNAPSHOT.jar
 
 # Add the application's jar to the container
-ADD ${JAR_FILE}  ai-contexts-bridge-0.0.1-SNAPSHOT.jar
+ADD ${JAR_FILE}  .
 
 # Run the jar file with /dev/./urandom as source of entropy
-ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/ ai-contexts-bridge-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","./ai-contexts-bridge-0.0.1-SNAPSHOT.jar"]
