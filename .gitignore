@@ -33,3 +33,6 @@ build/
 .vscode/
 
 local.properties
+
+docker-run.sh
+docker-run.bat
