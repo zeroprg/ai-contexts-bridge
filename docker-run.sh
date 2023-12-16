@@ -4,5 +4,6 @@ docker run -d \
   -e UI_URI=http://tothemoon.chat:80 \
   -e BACKEND_URI=http://tothemoon.chat:8080 \
   -p 8080:8080 \
+  --name ai-contexts-bridge \
   zeroprg/ai-contexts-bridge
  
