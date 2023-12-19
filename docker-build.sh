@@ -1,1 +1,1 @@
- docker build --push -t zeroprg/ai-contexts-bridge .
+ docker build --push -t zeroprg/ai-contexts-bridge:latest .

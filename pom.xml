@@ -98,5 +98,18 @@
 			</plugin>
 		</plugins>
 	</build>
-
+<profiles>
+    <profile>
+        <id>prod</id>
+        <properties>
+            <!-- Define properties specific to the production profile -->
+            <spring.profiles.active>prod</spring.profiles.active>
+        </properties>
+        <build>
+            <plugins>
+                <!-- Include any specific plugins or configurations for production -->
+            </plugins>
+        </build>
+    </profile>
+</profiles>
 </project>
