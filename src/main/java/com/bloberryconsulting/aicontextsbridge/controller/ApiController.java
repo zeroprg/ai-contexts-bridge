@@ -3,6 +3,8 @@ package com.bloberryconsulting.aicontextsbridge.controller;
 import java.util.Collection;
 import java.util.UUID;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,8 +16,11 @@ import com.bloberryconsulting.aicontextsbridge.apis.service.ApiServiceRegistry;
 import com.bloberryconsulting.aicontextsbridge.exceptions.APIError;
 import com.bloberryconsulting.aicontextsbridge.model.ApiKey;
 import com.bloberryconsulting.aicontextsbridge.model.Client;
+import com.bloberryconsulting.aicontextsbridge.model.Context;
 import com.bloberryconsulting.aicontextsbridge.model.User;
 import com.bloberryconsulting.aicontextsbridge.repository.UserRepository;
+import com.bloberryconsulting.aicontextsbridge.service.UserService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,18 +39,20 @@ import static com.bloberryconsulting.aicontextsbridge.security.SecurityConfigura
 @RequestMapping("/api/v1")
 @CrossOrigin(origins = "${ui.uri}", allowCredentials = "true")
 public class ApiController {
-  
+
     private final UserRepository userRepository;
     private final ApiServiceRegistry apiServiceRegistry;
+    private final UserService userService;
 
-    public ApiController(UserRepository userRepository, ApiServiceRegistry apiServiceRegistry) {
+    public ApiController(UserRepository userRepository, ApiServiceRegistry apiServiceRegistry, UserService userService) {
         this.userRepository = userRepository;
         this.apiServiceRegistry = apiServiceRegistry;
+        this.userService = userService; 
     }
 
 
     @Operation(
-        summary = "View only my API keys (owned by the current user) or his company (client) ",
+        summary = "View only my API keys (owned by the current user) or his company (client) or public APIs ",
         description = "Retrieves a list of API keys that are owned by the currently authenticated user or his company (client). No special role requiered.",
   
         security = @SecurityRequirement(name = "oauth2scheme"),
@@ -239,29 +246,42 @@ public class ApiController {
     })
     @PostMapping("/customer/query")
     public ResponseEntity<?> queryCustomer(
+                HttpServletRequest request,
                 @Parameter(description = "The message to be processed by the API service")
-                @RequestBody String message ) {
-
-                    
-        // Logic to retrieve personalized responses for a customer        
+                @RequestBody String message) {
+    
+        // Retrieve user and session information
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        String currentUserId = authentication.getName(); // Assuming this retrieves the user ID
+        String currentUserId = authentication.getName();
         User user = userRepository.findUserById(currentUserId);
-        final String apiKey = user.getRecentApiId();
-   
+        String sessionId = request.getSession(false) != null ? request.getSession().getId() : "No session";
+    
+        // Retrieve context documents associated with the user and session
+        Context context = userService.getUserContextById(user, sessionId);
+        String contextString = "";
+        if (context != null) {
+            String[] documents = context.getDocuments();
+            contextString = String.join("\n", documents); // Combine documents into a single string
+        }
+    
+        // Append context to the prompt message
+        String combinedMessage = contextString + "\n" + message;
+    
+        // Continue with API key validation and service invocation
+        String apiKey = user.getRecentApiId();
         if (apiKey == null) {
             throw new APIError(HttpStatus.BAD_REQUEST, "No API key selected");
         }
-
+    
         ApiKey apiKeyObject = userRepository.findApiKeyByApiKeyId(apiKey);
+         String result = null;
         ApiService apiService = apiServiceRegistry.getService(apiKeyObject.getName());
-        final String result = apiService.getResponse(currentUserId, apiKey, null, message);
-
+        
+        result = apiService.getResponse(apiKeyObject, combinedMessage);     
+    
         return ResponseEntity.ok(result);
-       
     }
-
+    
     // ... continue with other methods ...
 }
 

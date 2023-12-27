@@ -1,0 +1,13 @@
+<hazelcast-client xmlns="http://www.hazelcast.com/schema/client-config"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://www.hazelcast.com/schema/client-config
+                  http://www.hazelcast.com/schema/client-config/hazelcast-client-config-4.0.xsd">
+            <cluster-name>tothemoon</cluster-name>             
+    <network>
+
+        <cluster-members>
+            <address>45.32.199.91:5701</address>
+        </cluster-members>
+    </network>
+    <!-- other configurations -->
+</hazelcast-client>

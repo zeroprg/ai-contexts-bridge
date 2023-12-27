@@ -11,14 +11,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bloberryconsulting.aicontextsbridge.model.Context;
 import com.bloberryconsulting.aicontextsbridge.model.User;
 import com.bloberryconsulting.aicontextsbridge.service.UserService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -28,6 +31,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import static com.bloberryconsulting.aicontextsbridge.security.SecurityConfiguration.ROLE_CLIENT_ADMINISTRATOR_DESC;
 import static com.bloberryconsulting.aicontextsbridge.security.SecurityConfiguration.ROLE_SITE_ADMINISTRATOR_DESCR;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
 import static com.bloberryconsulting.aicontextsbridge.security.SecurityConfiguration.ROLE_CUSTOMER_DESCR;
 import static com.bloberryconsulting.aicontextsbridge.security.SecurityConfiguration.ROLE_APIKEY_MANAGER_DESC;
 
@@ -212,5 +221,62 @@ public class UserController {
     public ResponseEntity<String> assignRoleToUser(@RequestParam String email, @RequestParam String role) {
         userService.assignRoleToUser(email, role);
         return ResponseEntity.ok("Role assigned successfully");
+    }
+
+
+
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully stored documents",
+                     content = @Content(mediaType = "application/json", 
+                                        schema = @Schema(implementation = String.class))),
+        @ApiResponse(responseCode = "400", description = "Bad Request - Invalid documents provided",
+                     content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "401", description = "User is not authenticated",
+                     content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "403", description = "User is not authorized to access this resource",
+                     content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                     content = @Content(mediaType = "application/json"))
+    })
+    @PostMapping("/context/store")
+    public ResponseEntity<?> storeContext(
+                HttpServletRequest request,
+                @Parameter(description = "Context to be stored")
+                @RequestBody Context context) {
+        // Getting the session ID from the HttpServletRequest
+        String sessionId = request.getSession(false) != null ? request.getSession().getId() : "No session";
+        User user = this.getUserInfo().getBody();
+        context.setLastUsed(new java.util.Date());
+        context.setSessionId(sessionId);
+        context.setUserId(user.getId());    
+        userService.updateUsersContexts(user, context);    
+        return ResponseEntity.ok(user);
+    }
+    
+ 
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved document's context",
+                     content = @Content(mediaType = "application/json",
+                                        schema = @Schema(implementation = String[].class))),
+        @ApiResponse(responseCode = "401", description = "User is not authenticated",
+                     content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "403", description = "User is not authorized to access this resource",
+                     content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "404", description = "Documents not found",
+                     content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                     content = @Content(mediaType = "application/json"))
+    })
+    @GetMapping("/context/{sessionId}")
+    public ResponseEntity<?> getContext(HttpServletRequest request, @PathVariable String sessionId) {
+        User user = this.getUserInfo().getBody();
+        // Assuming 'retrieveService' is a service that handles retrieval of documents
+        Context context = userService.getUserContextById(user, sessionId);
+    
+        if (context == null ) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Context not found");
+        }
+    
+        return ResponseEntity.ok(context);
     }
 }

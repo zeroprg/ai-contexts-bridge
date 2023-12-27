@@ -21,10 +21,21 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse.toString(), HttpStatus.TOO_MANY_REQUESTS);
     }
 
-    @ExceptionHandler(APIError.class)
-    public ResponseEntity<String> handleTooManyRequestsException(APIError ex) {
+    @ExceptionHandler(HttpClientErrorException.class)
+    public ResponseEntity<String> handleHttpClientErrorException(HttpClientErrorException ex) {
         JSONObject errorResponse = new JSONObject();
-        errorResponse.put("message", ex.getMessage());
+        errorResponse.put("message",  ex.getLocalizedMessage());
+        errorResponse.put("type", "http client error");
+        errorResponse.put("code", ex.getStatusCode().toString());
+        errorResponse.put("recomendation", "Please cut context.");
+
+        return new ResponseEntity<>(errorResponse.toString(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(APIError.class)
+    public ResponseEntity<String> handleAPIError(APIError ex) {
+        JSONObject errorResponse = new JSONObject();
+        errorResponse.put("message", ex.getLocalizedMessage());
         errorResponse.put("type", "Internal Error");
         errorResponse.put("code", "500");
         errorResponse.put("recomendation", "Please select any available API from the list of APIs.");

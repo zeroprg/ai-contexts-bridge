@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Map;
+
 
 @Data
 @NoArgsConstructor
@@ -19,5 +21,6 @@ public class User implements Serializable {
     private Date lastLogin; // Last login date
     private String pictureLink; // link to picture icon
     private String clientId; // clientId link to client (company profile) ( many Users to one Client)
+    private Map<String,Context> contexts; // User's contexts names <fileNAme>:<context>
     private HashSet<String> roles; // User's roles as strings
 }

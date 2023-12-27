@@ -1,7 +1,8 @@
 package com.bloberryconsulting.aicontextsbridge.apis.service;
 
+import com.bloberryconsulting.aicontextsbridge.model.ApiKey;
 
 public interface ApiService {
-    String getResponse(String userId, String apiKey, String apiUri, String message);
+    String getResponse(ApiKey apiKey, String message);
     String getApiId();
 }

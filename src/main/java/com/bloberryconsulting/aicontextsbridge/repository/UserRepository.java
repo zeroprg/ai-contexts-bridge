@@ -104,6 +104,19 @@ public class UserRepository {
     }   
 
     /**
+     * Retrieves all API public keys stored in the repository.
+     *
+     * @return A collection of all API keys.
+     */
+    public Collection<ApiKey> findAllPublicApiKeys() {
+      
+        Collection<ApiKey> keys = hazelcastService.retrieveAll(API_KEYS_MAP);
+    return keys.stream()
+                .filter(apiKey -> apiKey.isPublicAccessed())
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Retrieves all API keys stored in the repository.
      *
      * @return A collection of all API keys.

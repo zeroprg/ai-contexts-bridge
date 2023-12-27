@@ -17,6 +17,10 @@ public class ApiKey  implements Serializable {
     private String uri; // Comma-separated roles
     private String homepage; // Unique identifier
     private String userId; // User's id , owner id
+    private int maxContextLength; // Max context length
     private Double totalCost; //Total charged for this api key
     private boolean publicAccessed; //Is it Public accessed
+    private boolean defaultKey;
+    private String model; // Model name
+    private String description; // Description
 }
