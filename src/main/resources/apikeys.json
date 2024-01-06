@@ -3,21 +3,7 @@
         "keyId": "api_key_1",
         "keyValue": "${API_KEY}",
         "name": "ChatGPT",
-        "uri": "https://api.openai.com/v1/engines/gpt-4/completions",
-        "homepage": "https://api.openai.com/",
-        "userId": "zeroprg@gmail.com",
-        "publicAccessed": true,
-        "defaultKey": false,
-        "maxContextLength": 8192,
-        "totalCost": 0.0,
-        "description": "GPT-4 model, the latest generation for advanced AI applications.",
-        "model": "gpt-4"
-    },
-    {
-        "keyId": "api_key_2",
-        "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
-        "uri": "https://api.openai.com/v1/turbo/engines/gpt-4-turbo",
+        "uri": "https://api.openai.com/v1/chat/completions",
         "homepage": "https://api.openai.com/",
         "userId": "zeroprg@gmail.com",
         "publicAccessed": true,
@@ -25,13 +11,15 @@
         "maxContextLength": 4096,
         "totalCost": 0.0,
         "description": "GPT-4 model, the latest generation for advanced AI applications.",
-        "model": "gpt-4-turbo"
+        "model": "gpt-4-1106-preview"
     },
+
+    
     {
-        "keyId": "api_key_3",
+        "keyId": "api_key_2",
         "keyValue": "${API_KEY}",
         "name": "ChatGPT",
-        "uri": "https://api.openai.com/v1/engines/gpt-3/completions",
+        "uri": "https://api.openai.com/v1/chat/completions",
         "homepage": "https://api.openai.com/",
         "userId": "zeroprg@gmail.com",
         "publicAccessed": true,
@@ -39,8 +27,24 @@
         "maxContextLength": 4096,
         "totalCost": 0.0,
         "description": "General purpose model for various AI applications.",
-        "model": "gpt-3"
+        "model": "gpt-3.5-turbo-0301"
     },
+
+    {
+        "keyId": "api_key_3",
+        "keyValue": "${API_KEY}",
+        "name": "ChatGPT",
+        "uri": "https://api.openai.com/v1/chat/completions",
+        "homepage": "https://api.openai.com/",
+        "userId": "zeroprg@gmail.com",
+        "publicAccessed": true,
+        "defaultKey": false,
+        "maxContextLength": 4096,
+        "totalCost": 0.0,
+        "description": "General purpose model for various AI applications.",
+        "model": "gpt-3.5-turbo-0613"
+    },
+    
     {
         "keyId": "api_key_4",
         "keyValue": "${API_KEY}",
@@ -92,9 +96,9 @@
         "userId": "zeroprg@gmail.com",
         "publicAccessed": true,
         "defaultKey": true,
-        "maxContextLength": 16385,
+        "maxContextLength": 4096,
         "totalCost": 0.0,
-        "model": "gpt-3.5-turbo",
+        "model": "gpt-3.5-turbo-1106",
         "description": "GPT-3.5 Turbo model, optimized for chat-like interactions."
     },
     {
@@ -122,7 +126,7 @@
         "defaultKey": false,
         "maxContextLength": 16385,
         "totalCost": 0.0,
-        "model": "gpt-3.5-turbo",
+        "model": "gpt-3.5-turbo-16k-0613",
         "description": "GPT-3.5 Turbo model, optimized for chat-like interactions."
     },
     {
@@ -139,48 +143,8 @@
         "model": "gpt-3.5-turbo",
         "description": "GPT-3.5 Turbo model, optimized for chat-like interactions."
     },
-    {
-        "keyId": "api_key_11",
-        "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
-        "uri": "https://api.openai.com/v1/chat/completions",
-        "homepage": "https://api.openai.com/",
-        "userId": "zeroprg@gmail.com",
-        "publicAccessed": true,
-        "defaultKey": false,
-        "maxContextLength": 4096,
-        "totalCost": 0.0,
-        "model": "gpt-3.5-turbo",
-        "description": "GPT-3.5 Turbo model, optimized for chat-like interactions."
-    },
-    {
-        "keyId": "api_key_12",
-        "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
-        "uri": "https://api.openai.com/v1/chat/completions",
-        "homepage": "https://api.openai.com/",
-        "userId": "zeroprg@gmail.com",
-        "publicAccessed": true,
-        "defaultKey": false,
-        "maxContextLength": 16385,
-        "totalCost": 0.0,
-        "model": "gpt-3.5-turbo",
-        "description": "GPT-3.5 Turbo model, optimized for chat-like interactions."
-    },
-    {
-        "keyId": "api_key_13",
-        "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
-        "uri": "https://api.openai.com/v1/chat/completions",
-        "homepage": "https://api.openai.com/",
-        "userId": "zeroprg@gmail.com",
-        "publicAccessed": true,
-        "defaultKey": false,
-        "maxContextLength": 4096,
-        "totalCost": 0.0,
-        "model": "gpt-3.5-turbo",
-        "description": "GPT-3.5 Turbo model, optimized for chat-like interactions."
-    },
+
+
     {
         "keyId": "api_key_14",
         "keyValue": "${API_KEY}",
@@ -193,7 +157,7 @@
         "maxContextLength": 4096,
         "totalCost": 0.0,
         "model": "text-davinci-003",
-        "description": "General purpose model for various AI applications."
+        "description": "Code-Davinci  model for code-related tasks.."
     },
     {
         "keyId": "api_key_15",
@@ -207,7 +171,7 @@
         "maxContextLength": 4096,
         "totalCost": 0.0,
         "model": "text-davinci-002",
-        "description": "General purpose model for various AI applications."
+        "description": "Code-Davinci purpose model for code-related tasks.."
     },
     {
         "keyId": "api_key_16",

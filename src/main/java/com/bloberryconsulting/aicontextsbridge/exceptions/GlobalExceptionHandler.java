@@ -37,8 +37,8 @@ public class GlobalExceptionHandler {
         JSONObject errorResponse = new JSONObject();
         errorResponse.put("message", ex.getLocalizedMessage());
         errorResponse.put("type", "Internal Error");
-        errorResponse.put("code", "500");
-        errorResponse.put("recomendation", "Please select any available API from the list of APIs.");
+        errorResponse.put("code", ex.getStatusCode());
+        errorResponse.put("recomendation", "Please cut context.");
 
         return new ResponseEntity<>(errorResponse.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
     }

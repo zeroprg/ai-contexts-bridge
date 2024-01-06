@@ -3,6 +3,7 @@ import com.google.cloud.speech.v1.SpeechClient;
 import com.google.cloud.speech.v1.SpeechRecognitionResult;
 import com.google.cloud.speech.v1.SpeechRecognitionAlternative;
 import com.bloberryconsulting.aicontextsbridge.model.ApiKey;
+import com.bloberryconsulting.aicontextsbridge.model.Context;
 import com.google.cloud.speech.v1.RecognitionAudio;
 import com.google.cloud.speech.v1.RecognitionConfig;
 import com.google.protobuf.ByteString;
@@ -16,7 +17,7 @@ import java.util.List;
 public class GoogleSpeechToTextService implements ApiService{
 
 
-    public String getResponse(ApiKey apiKey, String audioFilePath) {
+    public String getResponse(ApiKey apiKey, String audioFilePath, List<Context> contextHistory) {
         try (SpeechClient speechClient = SpeechClient.create()) {
             // The path to the audio file to transcribe
             byte[] data = Files.readAllBytes(Paths.get(audioFilePath));

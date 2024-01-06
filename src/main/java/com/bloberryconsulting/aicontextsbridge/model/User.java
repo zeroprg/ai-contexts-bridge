@@ -13,7 +13,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class User implements Serializable {
+public class User implements Serializable, Cloneable {
     private String id; // Unique identifier
     private String name; // User's name
     private String email; // User's email
@@ -23,4 +23,13 @@ public class User implements Serializable {
     private String clientId; // clientId link to client (company profile) ( many Users to one Client)
     private Map<String,Context> contexts; // User's contexts names <fileNAme>:<context>
     private HashSet<String> roles; // User's roles as strings
+
+    @Override
+    public User clone() {
+        try {
+            return (User) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError(); // Can't happen
+        }
+    }
 }

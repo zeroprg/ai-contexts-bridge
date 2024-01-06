@@ -1,9 +1,11 @@
 package com.bloberryconsulting.aicontextsbridge.service;
 
+import com.bloberryconsulting.aicontextsbridge.model.User;
 import com.hazelcast.core.DistributedObject;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import java.util.concurrent.ConcurrentMap;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -11,7 +13,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Collection;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Service;
 public class HazelcastService {
   
     private final HazelcastInstance hazelcastInstance;
+    //private final Logger logger = LoggerFactory.getLogger(HazelcastService.class);
+
 
     public HazelcastService(HazelcastInstance hazelcastInstance, 
         @Value("${hazelcast-client.clear-maps}") boolean clearMaps,
@@ -36,7 +39,117 @@ public class HazelcastService {
             storeMapsToDirectory(backupDirectory);
         }
     }
+/*
+    public void storeUser(IMap<String, User> userMap, User user) {
+        try {
 
+                    // Clone the user object
+            User userToStore = user.clone();
+            // Store each context separately
+             // Create a new map for the modified contexts
+            Map<String, Context> modifiedContexts = new HashMap<>();
+
+            if (userToStore.getContexts() != null) {
+                userToStore.getContexts().forEach((key, context) -> {
+                    
+                    // Clone the context and set the conversation history to null
+                    Context contextToStore = new Context(context);
+                    contextToStore.setConversationHistory(null);
+                    modifiedContexts.put(key, contextToStore);
+    
+                    // Store the original context separately
+                    storeContext(context);
+                });
+                // Set the modified contexts map to the cloned user , Do aka deep copy
+                userToStore.setContexts(modifiedContexts);
+
+            }
+
+            // Store the user object
+            userMap.put(userToStore.getId(), userToStore);
+
+            logger.debug("User '{}' stored in Hazelcast", userToStore.getId());
+        } catch (Exception e) {
+            logger.error("Error storing user in Hazelcast: {}", e.getMessage(), e);
+        }
+    }
+
+
+    public User restoreUser(IMap<String, User> userMap, String userId) {
+        User user = userMap.get(userId);
+        if (user != null && user.getContexts() != null) {
+            // Retrieve the conversation history for each context
+                user.getContexts().forEach((key, context) -> {
+                    JSONArray conversationHistory = retrieveConversationHistory(context.getSessionId());
+                    context.setConversationHistory(conversationHistory);
+                });
+   
+               
+        }
+
+        return user;
+    }
+
+     
+    public void storeContext(Context context) {
+        if(context.getConversationHistory() == null) return;
+        try {
+            // Serialize the conversation history to a byte array
+            byte[] conversationHistoryBytes = serializeToJsonByteArray(context.getConversationHistory());
+            
+            // store the history of conversation in the hazelcast map
+           
+            hazelcastInstance.getMap(CONTEXT_MAP).put(context.getSessionId() + "_history", conversationHistoryBytes);
+            logger.info("Context '{}' updated in Hazelcast", context.getSessionId());
+        } catch (IOException e) {
+            logger.error("Error storing context in Hazelcast: {}", e.getMessage(), e);
+        }
+    }
+
+    public JsonArray retrieveConversationHistory(String sessionId) {
+        IMap<String, Object> map = hazelcastInstance.getMap(CONTEXT_MAP);       
+        byte[] conversationHistoryBytes = (byte[]) map.get(sessionId + "_history");
+        JSONArray conversationHistory = null;
+        if (conversationHistoryBytes != null) {
+            try {
+                conversationHistory = deserializeJsonByteArray(conversationHistoryBytes);
+                
+            } catch (Exception e) {
+                logger.error("Error deserializing conversation history for context '{}': {}", sessionId, e.getMessage(), e);
+            }
+        }
+
+        return conversationHistory;
+    }
+
+    private byte[] serializeToJsonByteArray(JSONArray jsonArray) throws IOException {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ObjectOutputStream out = new ObjectOutputStream(bos)) {
+            out.writeObject(jsonArray.toString());
+            return bos.toByteArray();
+        }
+    }
+
+    private JsonArray deserializeJsonByteArray(byte[] data) throws IOException, ClassNotFoundException {
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(data);
+             ObjectInputStream in = new ObjectInputStream(bis)) {
+            String jsonArrayString = (String) in.readObject();
+            return new JSONArray(jsonArrayString);
+        }
+    }
+*/
+
+    public Collection<String> retrieveAllMapsIds(String mapName) {
+        IMap<String, User> userMap = hazelcastInstance.getMap(mapName);
+        return userMap.keySet();
+    }
+
+    public IMap<String, ?> getMap(String mapName) {
+        IMap<String, ?> map = hazelcastInstance.getMap(mapName);
+        return map;
+    }
+
+    
 
     // Method to clear all maps in the Hazelcast instance
     public void clearAllMaps() {
@@ -44,7 +157,7 @@ public class HazelcastService {
 
         for (DistributedObject distributedObject : distributedObjects) {
             if (distributedObject instanceof IMap) {
-                IMap<?, ?> map = (IMap<?, ?>) distributedObject;
+                ConcurrentMap<?, ?> map = (IMap<?, ?>) distributedObject;
                 map.clear();
             }
         }
@@ -91,7 +204,7 @@ public class HazelcastService {
      * @return
      */
     public <T> Collection<T> retrieveAll(String mapName) {
-        IMap<String, T> map = hazelcastInstance.getMap(mapName);
+        ConcurrentMap<String, T> map = hazelcastInstance.getMap(mapName);
         return map.values();
     }
 
@@ -104,8 +217,9 @@ public class HazelcastService {
      * @param value The data to be stored.
      */
     public void storeData(String mapName, String key, Object value) {
-        IMap<String, Object> map = hazelcastInstance.getMap(mapName);
+        ConcurrentMap<String, Object> map = hazelcastInstance.getMap(mapName);
         map.put(key, value);
+
     }
 
     /**
@@ -116,7 +230,7 @@ public class HazelcastService {
      * @return The data associated with the given key, or null if not found.
      */
     public Object retrieveData(String mapName, String key) {
-        IMap<String, Object> map = hazelcastInstance.getMap(mapName);
+        ConcurrentMap<String, Object> map = hazelcastInstance.getMap(mapName);
         return map.get(key);
     }
 

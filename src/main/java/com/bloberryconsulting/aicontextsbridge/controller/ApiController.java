@@ -1,10 +1,11 @@
 package com.bloberryconsulting.aicontextsbridge.controller;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,6 +41,7 @@ import static com.bloberryconsulting.aicontextsbridge.security.SecurityConfigura
 @CrossOrigin(origins = "${ui.uri}", allowCredentials = "true")
 public class ApiController {
 
+    private static final String DEFAULT_ASSISTANCE_ROLE_MESSAGE = "Technical assistant";
     private final UserRepository userRepository;
     private final ApiServiceRegistry apiServiceRegistry;
     private final UserService userService;
@@ -248,25 +250,33 @@ public class ApiController {
     public ResponseEntity<?> queryCustomer(
                 HttpServletRequest request,
                 @Parameter(description = "The message to be processed by the API service")
-                @RequestBody String message) {
+                @RequestBody PayloadDTO payload) {
+
     
         // Retrieve user and session information
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUserId = authentication.getName();
         User user = userRepository.findUserById(currentUserId);
-        String sessionId = request.getSession(false) != null ? request.getSession().getId() : "No session";
-    
-        // Retrieve context documents associated with the user and session
-        Context context = userService.getUserContextById(user, sessionId);
-        String contextString = "";
-        if (context != null) {
-            String[] documents = context.getDocuments();
-            contextString = String.join("\n", documents); // Combine documents into a single string
+        if(user == null) {
+            throw new APIError(HttpStatus.BAD_REQUEST, "No user found for the current user ID: " + currentUserId);
         }
-    
-        // Append context to the prompt message
-        String combinedMessage = contextString + "\n" + message;
-    
+        String  sessionId = request.getSession(false) != null ? request.getSession().getId() : "No session";
+        if( payload.getSessionId() != null && !payload.getSessionId().isEmpty()) {
+            sessionId = payload.getSessionId();
+        }
+        
+        // Retrieve context documents associated with the user and session
+        List<Context> contexts = userService.getUserContextById(user, sessionId);
+
+        if (contexts == null) {
+            Context context = new Context();
+            context.setSessionId(sessionId);
+            context.setName("Default");
+            context.setUserId(user.getId());
+            context.setAssistantRoleMessage(DEFAULT_ASSISTANCE_ROLE_MESSAGE);
+            contexts = new ArrayList<Context>();
+        }
+
         // Continue with API key validation and service invocation
         String apiKey = user.getRecentApiId();
         if (apiKey == null) {
@@ -274,10 +284,16 @@ public class ApiController {
         }
     
         ApiKey apiKeyObject = userRepository.findApiKeyByApiKeyId(apiKey);
-         String result = null;
+        if( apiKeyObject == null) {
+            throw new APIError(HttpStatus.BAD_REQUEST, "No API key found for the selected API apiKeyId: " + apiKey);
+        }  
+
+        String result = null;
         ApiService apiService = apiServiceRegistry.getService(apiKeyObject.getName());
         
-        result = apiService.getResponse(apiKeyObject, combinedMessage);     
+        result = apiService.getResponse(apiKeyObject, payload.getData(), contexts);   
+        // Update the user's context with the latest response in case of a successful response from chat's APIs
+        userService.updateUsersContexts(user, contexts);    
     
         return ResponseEntity.ok(result);
     }

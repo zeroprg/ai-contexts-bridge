@@ -7,6 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,8 +17,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bloberryconsulting.aicontextsbridge.exceptions.APIError;
 import com.bloberryconsulting.aicontextsbridge.model.Context;
 import com.bloberryconsulting.aicontextsbridge.model.User;
+import com.bloberryconsulting.aicontextsbridge.service.AssistantService;
 import com.bloberryconsulting.aicontextsbridge.service.UserService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,12 +35,11 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import static com.bloberryconsulting.aicontextsbridge.security.SecurityConfiguration.ROLE_CLIENT_ADMINISTRATOR_DESC;
 import static com.bloberryconsulting.aicontextsbridge.security.SecurityConfiguration.ROLE_SITE_ADMINISTRATOR_DESCR;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.bloberryconsulting.aicontextsbridge.security.SecurityConfiguration.ROLE_CUSTOMER_DESCR;
+//import static com.bloberryconsulting.aicontextsbridge.security.SecurityConfiguration.ROLE_CUSTOMER_DESCR;
 import static com.bloberryconsulting.aicontextsbridge.security.SecurityConfiguration.ROLE_APIKEY_MANAGER_DESC;
 
 @RestController
@@ -45,9 +47,11 @@ import static com.bloberryconsulting.aicontextsbridge.security.SecurityConfigura
 @CrossOrigin(origins = "${ui.uri}", allowCredentials = "true")
 public class UserController {
     private final UserService userService;
+    private final AssistantService assistanceService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, AssistantService assistanceService) {
         this.userService = userService;
+        this.assistanceService = assistanceService;
     }
 
     @Operation(
@@ -253,6 +257,36 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
     
+    @ApiResponses(value = {
+    @ApiResponse(responseCode = "200", description = "Successfully deleted the file",
+                 content = @Content(mediaType = "application/json")),
+    @ApiResponse(responseCode = "400", description = "Bad Request - Invalid file identifier provided",
+                 content = @Content(mediaType = "application/json")),
+    @ApiResponse(responseCode = "401", description = "User is not authenticated",
+                 content = @Content(mediaType = "application/json")),
+    @ApiResponse(responseCode = "403", description = "User is not authorized to delete this file",
+                 content = @Content(mediaType = "application/json")),
+    @ApiResponse(responseCode = "404", description = "File not found",
+                 content = @Content(mediaType = "application/json")),
+    @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                 content = @Content(mediaType = "application/json"))
+})
+@DeleteMapping("/context/deleteFile")
+public ResponseEntity<User> deleteFile(
+            HttpServletRequest request,
+            @Parameter(description = "Identifier of the file (file name) to be deleted")
+            @RequestParam String fileId) {        // Getting the session ID from the HttpServletRequest
+        String sessionId = request.getSession(false) != null ? request.getSession().getId() : "No session";
+        User user = this.getUserInfo().getBody();
+        boolean isDeleted = userService.deleteFile(user, sessionId, fileId);
+        if(!isDeleted) {
+           throw new APIError(HttpStatus.EXPECTATION_FAILED, "Couldn't find file to delete:"+fileId);
+        }
+        
+        userService.updateUser(user);  
+        return ResponseEntity.ok(user);
+}
+
  
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved document's context",
@@ -271,12 +305,81 @@ public class UserController {
     public ResponseEntity<?> getContext(HttpServletRequest request, @PathVariable String sessionId) {
         User user = this.getUserInfo().getBody();
         // Assuming 'retrieveService' is a service that handles retrieval of documents
-        Context context = userService.getUserContextById(user, sessionId);
+        List<Context> contexts = userService.getUserContextById(user, sessionId);
     
-        if (context == null ) {
+        if (contexts == null || contexts.size() == 0 ) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Context not found");
         }
     
-        return ResponseEntity.ok(context);
+        return ResponseEntity.ok(contexts.get(0));
     }
+
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved all GPT assistant roles",
+                     content = @Content(mediaType = "application/json",
+                                        schema = @Schema(implementation = String[].class))),
+        @ApiResponse(responseCode = "401", description = "User is not authenticated",
+                     content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "403", description = "User is not authorized to access this resource",
+                     content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                     content = @Content(mediaType = "application/json"))
+    })
+    @GetMapping("/GPTAssistantRoles")
+    public ResponseEntity<?> getAllGPTAssistanceRoles() {
+        // Retrieve all assistant roles 
+        String[] roles = assistanceService.getAllAssistanceRoles();
+        return ResponseEntity.ok(roles);
+    }
+    
+    
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved GPT assistant role for specific sessionID",
+                     content = @Content(mediaType = "application/json",
+                                        schema = @Schema(implementation = String[].class))),
+        @ApiResponse(responseCode = "401", description = "User is not authenticated",
+                     content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "403", description = "User is not authorized to access this resource",
+                     content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                     content = @Content(mediaType = "application/json"))
+    })
+    @GetMapping("/GPTAssistantRole")
+    public ResponseEntity<?> getGPTAssistanceRole(HttpServletRequest request) {
+        String sessionId = request.getSession(false) != null ? request.getSession().getId() : "No session";
+        // Assuming the assistant roles are fetched based on the session ID
+        User user = this.getUserInfo().getBody();
+        String[] roles  = assistanceService.getAssistanceRoles(user, sessionId);
+        String assistantRoleMessage = roles != null && roles.length>0 ? roles[0] : null;
+        return ResponseEntity.ok(assistantRoleMessage);
+    }
+
+    @Operation(summary = "Set GPT Assistant Role Message",
+               description = "Sets the role message for the GPT assistant.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully set the assistant role message",
+                     content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "400", description = "Invalid role message provided",
+                     content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "401", description = "User is not authenticated",
+                     content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "403", description = "User is not authorized to perform this action",
+                     content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                     content = @Content(mediaType = "application/json"))
+    })
+    @PostMapping("/setGPTAssistantRole")
+    public ResponseEntity<?> setGPTAssistantRole(HttpServletRequest request,
+        @Parameter(description = "Assistant role message to set")
+        @RequestBody PayloadDTO payload) {
+        String sessionId = request.getSession(false) != null ? request.getSession().getId() : "No session";
+        User user = this.getUserInfo().getBody();
+        // Assuming the role message is processed and set here
+        // You might need to add user and context information based on your requirements
+        assistanceService.setAssistanceRole(user, sessionId, payload.getData());
+
+        return ResponseEntity.ok("Assistant role message set successfully.");
+
+        // Include other exception handling as needed
+    }    
 }

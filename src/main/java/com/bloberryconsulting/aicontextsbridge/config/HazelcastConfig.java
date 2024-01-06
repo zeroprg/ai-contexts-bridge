@@ -4,9 +4,14 @@ package com.bloberryconsulting.aicontextsbridge.config;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.spring.context.SpringManagedContext;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 import org.springframework.beans.factory.annotation.Value;
+
+
 
 @Configuration
 public class HazelcastConfig {
@@ -15,12 +20,14 @@ public class HazelcastConfig {
 
     @Value("${hazelcast-client.network-config.addresses}")
     private String addresses;
-
     @Bean
     public HazelcastInstance hazelcastInstance() {
         Config config = new Config();
+        config.setManagedContext(new SpringManagedContext());
+
         config.setClusterName(clusterName);
         config.getNetworkConfig().setPublicAddress(addresses);
+    
         // Configure Hazelcast as needed
         return Hazelcast.newHazelcastInstance(config);
 

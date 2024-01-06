@@ -1,12 +1,16 @@
 package com.bloberryconsulting.aicontextsbridge.apis.service.billing;
 
-import org.aspectj.lang.JoinPoint;
+
+import java.util.List;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Aspect;
+
 import org.aspectj.lang.annotation.Around;
 
 import com.bloberryconsulting.aicontextsbridge.model.ApiKey;
 import com.bloberryconsulting.aicontextsbridge.model.Bill;
+import com.bloberryconsulting.aicontextsbridge.model.Context;
 import com.bloberryconsulting.aicontextsbridge.repository.UserRepository;
 import com.bloberryconsulting.aicontextsbridge.service.CryptoService;
 
@@ -30,6 +34,7 @@ public class BillingAspect {
         // This can be the API key, token count, etc.
         final ApiKey apiKeyObject = (ApiKey) joinPoint.getArgs()[0];
         final String message = joinPoint.getArgs()[1].toString();
+        final List<Context> contextHistory = (List<Context>) joinPoint.getArgs()[2];    
         final String userId = apiKeyObject.getUserId();
         String apiURI = apiKeyObject.getUri();
         final String encodedApiKey = apiKeyObject.getKeyValue();
@@ -39,7 +44,7 @@ public class BillingAspect {
             apiURI = apiKeyObject.getUri();
         }
 
-        String response = (String) joinPoint.proceed(new Object[] { apiKeyObject, message }); // Call the API service
+        String response = (String) joinPoint.proceed(new Object[] { apiKeyObject, message, contextHistory}); // Call the API service
 
         int tokenCount = calculateTokenCount(response);
 

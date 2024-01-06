@@ -12,10 +12,26 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 
 
-public class Context implements Serializable{
-    private String sessionId; // Session ID play as id for context
-    private String name; // Context's name
-    private Date lastUsed; // Last used date
-    private String userId; // userId or  clientId link to client/user (company profile) ( many Users to one Client)
-    private String[] documents; // Context's documents
+public class Context implements Serializable, Cloneable {
+    private String sessionId;
+    private String name;
+    private Date lastUsed;
+    private String userId;
+    private String[] documents;
+    private String conversationHistory; // serialized JSONArray
+    private String assistantRoleMessage;
+
+    // Existing constructors, getters, setters, and other methods...
+
+    // Copy constructor
+    public Context(Context other) {
+        this.sessionId = other.sessionId;
+        this.name = other.name;
+        this.lastUsed = (other.lastUsed != null) ? (Date) other.lastUsed.clone() : null;
+        this.userId = other.userId;
+        this.documents = (other.documents != null) ? other.documents.clone() : null;
+        // For JSONArray, we just copy the reference. Deep copy is tricky and depends on your needs.
+        this.conversationHistory = other.conversationHistory;
+        this.assistantRoleMessage = other.assistantRoleMessage;
+    }
 }

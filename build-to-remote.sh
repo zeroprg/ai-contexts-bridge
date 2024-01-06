@@ -47,12 +47,8 @@ fi
 # SSH command to kill existing Java process and start a new one
 echo "$password" | sshpass -p "$password" ssh $remote_user@$ip_address "pkill -f java"
  
-echo "$password" | sshpass -p "$password" ssh $remote_user@$ip_address "java -Djava.security.egd=file:/dev/./urandom \
-     -Dspring.profiles.active=prod \
-     -DAI_CONTEXTS_BRIDGE_APP_ID=$AI_CONTEXTS_BRIDGE_APP_ID \
-     -DAI_CONTEXTS_BRIDGE_APP_SECRET=$AI_CONTEXTS_BRIDGE_APP_SECRET \
-     -DOPENAI_API_KEY=$OPENAI_API_KEY \
-     -jar $dest_dir/$jar_name > $dest_dir/app.log 2>&1 &
+echo "$password" | sshpass -p "$password" ssh $remote_user@$ip_address "/home/zeroprg/start.sh \
+    $AI_CONTEXTS_BRIDGE_APP_ID  $AI_CONTEXTS_BRIDGE_APP_SECRET  $OPENAI_API_KEY"
 
 
 # Check if the ssh command was successful

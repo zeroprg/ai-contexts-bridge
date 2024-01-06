@@ -6,8 +6,10 @@ import com.bloberryconsulting.aicontextsbridge.model.Client;
 import com.bloberryconsulting.aicontextsbridge.model.ProfileDetails;
 import com.bloberryconsulting.aicontextsbridge.model.User;
 import com.bloberryconsulting.aicontextsbridge.service.HazelcastService;
+import com.hazelcast.map.IMap;
 import org.springframework.stereotype.Repository;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Repository
@@ -20,7 +22,6 @@ public class UserRepository {
     private static final String BILL_MAP = "bill";
 
     private final HazelcastService hazelcastService;
-
 
     public UserRepository(HazelcastService hazelcastService) {
         this.hazelcastService = hazelcastService;
@@ -37,7 +38,7 @@ public class UserRepository {
 
     /**
      * Updates an existing client profile in the repository.
-     *
+     * 
      * @param profileDetails The client profile with updated information.
      */
     public void updateProfile(String profileId, ProfileDetails profileDetails) {
@@ -54,16 +55,14 @@ public class UserRepository {
         return (ProfileDetails) hazelcastService.retrieveData(PROFILES_MAP, profileId);
     }
 
-
     /**
-     * Retrieves all  profiles stored in the repository.
+     * Retrieves all profiles stored in the repository.
      *
-     * @return A collection of all  profiles.
+     * @return A collection of all profiles.
      */
     public Collection<ProfileDetails> findAllProfiles() {
         return hazelcastService.retrieveAll(PROFILES_MAP);
     }
-
 
     /**
      * Retrieves all client profiles stored in the repository.
@@ -73,7 +72,6 @@ public class UserRepository {
     public Collection<ProfileDetails> findAllClientProfiles() {
         return hazelcastService.retrieveAll(CLIENT_MAP);
     }
-
 
     /**
      * Saves an API key in the repository.
@@ -101,7 +99,7 @@ public class UserRepository {
      */
     public ApiKey findApiKeyByApiKeyId(String apiKey) {
         return (ApiKey) hazelcastService.retrieveData(API_KEYS_MAP, apiKey);
-    }   
+    }
 
     /**
      * Retrieves all API public keys stored in the repository.
@@ -109,9 +107,9 @@ public class UserRepository {
      * @return A collection of all API keys.
      */
     public Collection<ApiKey> findAllPublicApiKeys() {
-      
+
         Collection<ApiKey> keys = hazelcastService.retrieveAll(API_KEYS_MAP);
-    return keys.stream()
+        return keys.stream()
                 .filter(apiKey -> apiKey.isPublicAccessed())
                 .collect(Collectors.toList());
     }
@@ -122,48 +120,49 @@ public class UserRepository {
      * @return A collection of all API keys.
      */
     public Collection<ApiKey> findApiKeysByUserId(String userId) {
-      
+
         Collection<ApiKey> keys = hazelcastService.retrieveAll(API_KEYS_MAP);
-    return keys.stream()
+        return keys.stream()
                 .filter(apiKey -> userId.equals(apiKey.getUserId()) || apiKey.isPublicAccessed())
                 .collect(Collectors.toList());
     }
 
     // Profile Details specific methods
 
-    /** 
+    /**
      * Retrieves all profiles stored in the repository.
      */
-    private Collection<ProfileDetails> getAllDetailProfiles() {        
+    private Collection<ProfileDetails> getAllDetailProfiles() {
         return hazelcastService.retrieveAll(CUSTOMER_MAP);
     }
 
     /**
      * Finds a profile by the user (customer) ID.
      * 
-     * @param userId The ID of the user whose  profile is to be retrieved.
+     * @param userId The ID of the user whose profile is to be retrieved.
      * @return The profile associated with the given user ID, or null if not found.
      */
     public Collection<ProfileDetails> findProfileByCustomerId(String userId) {
         return getAllDetailProfiles().stream().filter(profile -> userId.equals(profile.getOwnerId()))
-                    .collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
-
 
     /**
      * Finds a client profile by the client ID.
+     * 
      * @param clientId
      * @return
      */
     public Collection<ProfileDetails> findProfileByClientId(String clientId) {
         return getAllDetailProfiles().stream().filter(profile -> clientId.equals(profile.getOwnerId()))
-                    .collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     /**
      * Saves or updates a client profile in the repository.
      * 
-     * @param clientId The ID of the client whose profile is to be saved or updated.
+     * @param clientId       The ID of the client whose profile is to be saved or
+     *                       updated.
      * @param profileDetails The profile details to be saved or updated.
      */
     public void saveOrUpdateClientProfile(String clientId, ProfileDetails profileDetails) {
@@ -172,27 +171,28 @@ public class UserRepository {
 
     // Client specific methods
 
-        /**
+    /**
      * Finds a user by their ID.
      *
      * @param userId The ID of the user to find.
      * @return The found user, or null if not found.
      */
     public Client findClientById(String clientId) {
-        return (Client) hazelcastService.retrieveData(CUSTOMER_MAP,clientId);
+        return (Client) hazelcastService.retrieveData(CUSTOMER_MAP, clientId);
     }
 
-    /** 
+    /**
      * Retrieves all clients stored in the repository.
      */
-    public Collection<Client> getAllClients() {        
+    public Collection<Client> getAllClients() {
         return hazelcastService.retrieveAll(CLIENT_MAP);
     }
 
     /**
      * Saves or updates a client profile in the repository.
      * 
-     * @param clientId The ID of the client whose profile is to be saved or updated.
+     * @param clientId       The ID of the client whose profile is to be saved or
+     *                       updated.
      * @param profileDetails The profile details to be saved or updated.
      */
     public void saveOrUpdateClient(String clientId, Client client) {
@@ -207,18 +207,24 @@ public class UserRepository {
      * @param userId The ID of the user to find.
      * @return The found user, or null if not found.
      */
+    @SuppressWarnings("unchecked")
     public User findUserById(String userId) {
-        return (User) hazelcastService.retrieveData(CUSTOMER_MAP,userId);
+        IMap<String, User> userMap = (IMap<String, User>) hazelcastService.getMap(CUSTOMER_MAP);
+        User user = userMap.get(userId);
+        //User user = hazelcastService.restoreUser(userMap, userId);
+        return user;
     }
-
 
     /**
      * Creates a new user in the repository.
      *
      * @param user The user to create.
      */
+    @SuppressWarnings("unchecked")
     public void createUser(User user) {
-        hazelcastService.storeData(CUSTOMER_MAP,user.getId(), user);
+        IMap<String, User> map = (IMap<String, User>) hazelcastService.getMap(CUSTOMER_MAP);
+        map.put(user.getId(), user);
+        //hazelcastService.storeUser(map, user);
     }
 
     /**
@@ -226,18 +232,24 @@ public class UserRepository {
      *
      * @param user The user with updated information.
      */
+    @SuppressWarnings("unchecked")
     public void updateUser(User user) {
-        hazelcastService.storeData(CUSTOMER_MAP, user.getId(), user);
+        if (user.getContexts() != null)
+            user.getContexts().forEach((key, value) -> {
+                value.setUserId(user.getId());
+            });
+        IMap<String, User> map = (IMap<String, User>) hazelcastService.getMap(CUSTOMER_MAP);
+        //hazelcastService.storeUser(map, user);
+        map.put(user.getId(), user);
     }
 
-
-    /** 
-     * Retrieves all users stored in the repository.
-     */
-    public Collection<User> getAllUsers(String userId) {        
-        return hazelcastService.retrieveAll(CUSTOMER_MAP);
+    @SuppressWarnings("unchecked")
+    public Collection<User> getAllUsers() {
+        Collection<String> userIds = hazelcastService.retrieveAllMapsIds(CUSTOMER_MAP);
+        IMap<String, User> userMap = (IMap<String, User>) hazelcastService.getMap(CUSTOMER_MAP);
+        //return userIds.stream().map(id -> hazelcastService.restoreUser(userMap, id)).collect(Collectors.toList());
+        return userIds.stream().map(id ->userMap.get(id)).collect(Collectors.toList());
     }
-
 
     /**
      * Finds a user by their email.
@@ -247,9 +259,19 @@ public class UserRepository {
      */
     public User findUserByEmail(String email) {
         Collection<User> users = hazelcastService.retrieveAll(CUSTOMER_MAP);
-        return users.stream()
-                    .filter(user -> email.equals(user.getEmail())).findFirst().orElse(null);
+        // Find the user by email
+        Optional<User> foundUser = users.stream()
+                .filter(u -> email.equals(u.getEmail()))
+                .findFirst();
 
+        if (foundUser.isPresent()) {
+            User user = foundUser.get();
+            //user = restoreContextForUser(user);
+            return user;
+        } else {
+            // Handle the case where no user is found
+            return null;
+        }
     }
 
     /**
@@ -260,17 +282,37 @@ public class UserRepository {
      */
     public User findUserByName(String name) {
         Collection<User> users = hazelcastService.retrieveAll(CUSTOMER_MAP);
-        return users.stream()
-                    .filter(user -> name.equals(user.getName()))
-                    .findFirst()
-                    .orElse(null);
+        Optional<User> foundUser = users.stream()
+                .filter(user -> name.equals(user.getName()))
+                .findFirst();
+        if (foundUser.isPresent()) {
+            User user = foundUser.get();
+           // user = restoreContextForUser(user);
+            return user;
+        } else {
+            // Handle the case where no user is found
+            return null;
+        }
     }
+/* 
+    private User restoreContextForUser(User user) {
+        if (user.getContexts() != null) {
+            user.getContexts().forEach((key, context) -> {
+                JSONArray conversationHistory = hazelcastService.retrieveConversationHistory(context.getSessionId());
+                if (conversationHistory != null) {
+                    context.setConversationHistory(conversationHistory);
+                }
+            });
+        }
+        return user;
+    }
+*/
 
     /**
      * Assigns a new role to a user.
      *
      * @param userId The ID of the user to whom the role is to be assigned.
-     * @param role The role to be assigned to the user.
+     * @param role   The role to be assigned to the user.
      */
     public void assignRoleToUser(String userId, String role) {
         User user = findUserById(userId);
@@ -279,12 +321,13 @@ public class UserRepository {
             updateUser(user);
         }
     }
-   
+
     /**
      * Saves a collection of users in the repository.
+     * 
      * @param users
      */
-   public void saveAllUsers(Collection<User> users) {
+    public void saveAllUsers(Collection<User> users) {
         users.forEach(user -> hazelcastService.storeData(CUSTOMER_MAP, user.getId(), user));
     }
 
@@ -295,9 +338,8 @@ public class UserRepository {
      * @return The found user, or null if not found.
      */
     public Bill findBillByUserId(String userId) {
-        return (Bill) hazelcastService.retrieveData(BILL_MAP,userId);
+        return (Bill) hazelcastService.retrieveData(BILL_MAP, userId);
     }
-    
 
     /**
      * Finds a Bill by their name.
@@ -339,7 +381,6 @@ public class UserRepository {
         return hazelcastService.retrieveAll(BILL_MAP);
     }
 
+    // Other private methods...
 
-     // Other private methods...
- 
 }

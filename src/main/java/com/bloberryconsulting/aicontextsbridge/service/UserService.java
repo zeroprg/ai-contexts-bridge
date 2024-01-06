@@ -9,12 +9,14 @@ import com.bloberryconsulting.aicontextsbridge.security.SecurityUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
@@ -104,12 +106,13 @@ public class UserService {
                         user.setRecentApiId(apiKey.getKeyId());// always set the most recent API key as the default
                     if (apiKey.getName() == null || "ChatGPT".equals(apiKey.getName())) {
                         apiKey.setKeyValue(encoded);
-                    } else  try {
-                                    apiKey.setKeyValue(cryptoService.encrypt(apiKey.getKeyValue()));
-                                } catch (Exception e) {
-                                    // TODO Auto-generated catch block
-                                    e.printStackTrace();
-                                }
+                    } else
+                        try {
+                            apiKey.setKeyValue(cryptoService.encrypt(apiKey.getKeyValue()));
+                        } catch (Exception e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
 
                     userRepository.saveApiKey(apiKey);
                     userRepository.updateUser(user);
@@ -174,27 +177,57 @@ public class UserService {
 
         if (contexts == null) {
             contexts = new HashMap<String, Context>();
-            user.setContexts(contexts);
         }
         contexts.put(context.getName(), context);
+        user.setContexts(contexts);
         this.updateUser(user);
 
     }
 
-    public Context getUserContextById(User user, String sessionId) {
+    public void updateUsersContexts(User user, List<Context> contexts) {
         // Implement logic to update a user
-        if (user != null) {
-            Map<String, Context> contexts = user.getContexts();
 
-            if (contexts != null) {
-                return contexts.entrySet().stream()
-                        .filter(entry -> entry.getValue().getSessionId().equals(sessionId))
-                        .findFirst()
-                        .map(Map.Entry::getValue)
-                        .orElse(null);
-            }
+        Map<String, Context> userContexts = user.getContexts();
+
+        if (userContexts == null) {
+            userContexts = new HashMap<String, Context>();
+        }
+        for (Context context : contexts) {
+            userContexts.put(context.getName(), context);
+            user.setContexts(userContexts);
+        }
+        this.updateUser(user);
+
+    }
+
+    public List<Context> getUserContextById(User user, String sessionId) {
+        // Implement logic to update a user
+
+        Map<String, Context> contexts = user.getContexts();
+
+        if (contexts != null) {
+            return contexts.entrySet().stream()
+                    .filter(entry -> entry.getValue().getSessionId().equals(sessionId))
+                    .map(Map.Entry::getValue).collect(Collectors.toList());
         }
         return null;
+    }
+
+    public boolean deleteFile(User user, String sessionId, String fileId) {
+        Map<String, Context> contexts = user.getContexts();
+
+        if (contexts != null) {
+            Optional<String> contextKey = contexts.entrySet().stream()
+                    .filter(entry -> fileId.equals(entry.getKey()) && entry.getValue().getSessionId().equals(sessionId))
+                    .map(Map.Entry::getKey)
+                    .findFirst();
+
+            if (contextKey.isPresent()) {
+                contexts.remove(contextKey.get());
+                return true; // Return true to indicate successful deletion
+            }
+        }
+        return false; // Return false if the context was not found or if the contexts map is null
     }
 
 }
