@@ -23,6 +23,7 @@ public class User implements Serializable, Cloneable {
     private String clientId; // clientId link to client (company profile) ( many Users to one Client)
     private Map<String,Context> contexts; // User's contexts names <fileNAme>:<context>
     private HashSet<String> roles; // User's roles as strings
+    private Double credit = 0.0; // User's credit
 
     @Override
     public User clone() {

@@ -47,8 +47,14 @@ public class SecurityConfiguration {
                         .antMatchers("/","/index.html","/actuator/**", "/loginerror.html", "/success.html").permitAll()
                         //.antMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html","/api-docs/**", "/webjars/**").permitAll()
                         .antMatchers( "/public/**").permitAll()
-                        .antMatchers("/api/keys/manage/**").hasRole("APIKEY_MANAGER")
-                        
+                        .antMatchers("/stripepayment/webhook").permitAll() // Allow webhook endpoint
+                        .antMatchers("/stripepayment/create-checkout-session").permitAll()
+                        .antMatchers("/ws/**").permitAll()
+                        .antMatchers("/topic/transription").permitAll()
+                        .antMatchers("/audio").permitAll()
+
+
+                        .antMatchers("/api/keys/manage/**").hasRole("APIKEY_MANAGER")                        
                         .antMatchers("/api/admin/profiles/**").hasRole("SITE_ADMINISTRATOR")
                         .antMatchers("/api/client/**").hasRole("CLIENT_ADMINISTRATOR")
                         .antMatchers("/api/customer/**").hasRole("CUSTOMER")
@@ -91,7 +97,8 @@ public class SecurityConfiguration {
         configuration.setAllowCredentials(true); // Important for cookies
     
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/**", configuration); // Apply CORS to all endpoints
+
         return source;
     }
 }

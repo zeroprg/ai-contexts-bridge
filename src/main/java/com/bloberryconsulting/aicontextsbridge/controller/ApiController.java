@@ -259,7 +259,9 @@ public class ApiController {
         User user = userRepository.findUserById(currentUserId);
         if(user == null) {
             throw new APIError(HttpStatus.BAD_REQUEST, "No user found for the current user ID: " + currentUserId);
-        }
+        } else if( user.getCredit() > 5.0 && !user.getRoles().contains("ROLE_APIKEY_MANAGER")) {
+            throw new APIError(HttpStatus.BAD_REQUEST, "Donate a few dollars. Credit is overlimit for the current user ID: " + user.getName() + " credit: " + user.getCredit());
+        }   
         String  sessionId = request.getSession(false) != null ? request.getSession().getId() : "No session";
         if( payload.getSessionId() != null && !payload.getSessionId().isEmpty()) {
             sessionId = payload.getSessionId();
@@ -275,6 +277,7 @@ public class ApiController {
             context.setUserId(user.getId());
             context.setAssistantRoleMessage(DEFAULT_ASSISTANCE_ROLE_MESSAGE);
             contexts = new ArrayList<Context>();
+            contexts.add(context);
         }
 
         // Continue with API key validation and service invocation
@@ -292,9 +295,7 @@ public class ApiController {
         ApiService apiService = apiServiceRegistry.getService(apiKeyObject.getName());
         
         result = apiService.getResponse(apiKeyObject, payload.getData(), contexts);   
-        // Update the user's context with the latest response in case of a successful response from chat's APIs
-        userService.updateUsersContexts(user, contexts);    
-    
+           
         return ResponseEntity.ok(result);
     }
     

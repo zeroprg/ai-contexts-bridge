@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.bloberryconsulting.aicontextsbridge.exceptions.APIError;
 import com.bloberryconsulting.aicontextsbridge.model.Context;
+import com.bloberryconsulting.aicontextsbridge.model.Role;
 import com.bloberryconsulting.aicontextsbridge.model.User;
 import com.bloberryconsulting.aicontextsbridge.service.AssistantService;
 import com.bloberryconsulting.aicontextsbridge.service.UserService;
@@ -328,7 +329,7 @@ public ResponseEntity<User> deleteFile(
     @GetMapping("/GPTAssistantRoles")
     public ResponseEntity<?> getAllGPTAssistanceRoles() {
         // Retrieve all assistant roles 
-        String[] roles = assistanceService.getAllAssistanceRoles();
+        Role[] roles = assistanceService.getAllAssistanceRoles();
         return ResponseEntity.ok(roles);
     }
     
@@ -349,8 +350,8 @@ public ResponseEntity<User> deleteFile(
         String sessionId = request.getSession(false) != null ? request.getSession().getId() : "No session";
         // Assuming the assistant roles are fetched based on the session ID
         User user = this.getUserInfo().getBody();
-        String[] roles  = assistanceService.getAssistanceRoles(user, sessionId);
-        String assistantRoleMessage = roles != null && roles.length>0 ? roles[0] : null;
+        Role[] roles  = assistanceService.getAssistanceRoles(user, sessionId);
+        Role assistantRoleMessage = roles != null && roles.length>0 ? roles[0] : null;
         return ResponseEntity.ok(assistantRoleMessage);
     }
 

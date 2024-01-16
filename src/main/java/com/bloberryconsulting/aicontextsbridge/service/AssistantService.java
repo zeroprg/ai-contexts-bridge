@@ -14,6 +14,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
 import com.bloberryconsulting.aicontextsbridge.model.Context;
+import com.bloberryconsulting.aicontextsbridge.model.Role;
 import com.bloberryconsulting.aicontextsbridge.model.User;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,13 +54,13 @@ public class AssistantService {
      * Retrieves all available assistance roles from Hazelcast.
      * @return An array of assistance roles.
      */
-    public String[] getAllAssistanceRoles() {
+    public Role[] getAllAssistanceRoles() {
         // Assuming roles are stored in a Hazelcast map with a specific key
-        IMap<String, String[]> rolesMap = hazelcastInstance.getMap("rolesMap");
-        String[] roles = rolesMap.get("assistantRoles");
+        IMap<String, Role[]> rolesMap = hazelcastInstance.getMap("rolesMap");
+        Role[] roles = rolesMap.get("assistantRoles");
 
         // Check if roles are found, otherwise return an empty array
-        return roles != null ? roles : new String[]{};
+        return roles != null ? roles : new Role[]{};
     }
 
     private void loadRolesIntoHazelcast() {
@@ -72,10 +73,10 @@ public class AssistantService {
             }
 
             InputStream inputStream = resource.getInputStream();
-            String[] roles = objectMapper.readValue(inputStream, new TypeReference<String[]>(){});
+            Role[] roles = objectMapper.readValue(inputStream, new TypeReference<Role[]>(){});
 
             // Store the roles in Hazelcast
-            IMap<String, String[]> rolesMap = hazelcastInstance.getMap("rolesMap");
+            IMap<String, Role[]> rolesMap = hazelcastInstance.getMap("rolesMap");
             rolesMap.put("assistantRoles", roles);
 
             System.out.println("Roles loaded into Hazelcast: " + Arrays.toString(roles));
@@ -91,20 +92,21 @@ public class AssistantService {
      * @param contextId The ID of the context.
      * @return An array of assistance roles.
      */
-    public String[] getAssistanceRoles(User user, String sessionId) {
+    public Role[] getAssistanceRoles(User user, String sessionId) {
         if (user.getContexts() == null) {
             return null;
         }
     
-        return user.getContexts().entrySet().stream()
-                .filter(entry -> entry.getValue().getSessionId().equals(sessionId))
-                .sorted(Comparator.comparing(
-                    entry -> entry.getValue().getLastUsed() == null ? new Date(0) : entry.getValue().getLastUsed(),
-                    Comparator.reverseOrder()
-                ))
-                .map(entry -> entry.getValue().getAssistantRoleMessage())
-                .filter(Objects::nonNull)
-                .toArray(String[]::new);
+        // Get all assistance roles
+        Role[] allRoles = this.getAllAssistanceRoles();  
+
+        return Arrays.stream(allRoles)
+                .filter(role -> user.getContexts().entrySet().stream()
+                    .filter(entry -> entry.getValue().getSessionId().equals(sessionId))
+                    .anyMatch(entry -> role.getRole().equals(entry.getValue().getAssistantRoleMessage()))
+                )
+                .toArray(Role[]::new); // Use a generator function to create a Role[] array
+
     }
     
 
@@ -117,7 +119,7 @@ public class AssistantService {
     public void setAssistanceRole(User user, String contextId, String assistanceRoleMessage) {
         List<Context> userContexts = userService.getUserContextById(user, contextId) ;
         Context userContext = null;
-        if (userContexts != null) { 
+        if (userContexts != null &&  userContexts.size()>0) { 
             userContext  =  userContexts.get(0);
             userContext.setAssistantRoleMessage(assistanceRoleMessage);
         } else {

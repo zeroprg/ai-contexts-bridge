@@ -1,6 +1,6 @@
 package com.bloberryconsulting.aicontextsbridge.apis.service.billing;
 
-
+import java.util.HashMap;
 import java.util.List;
 
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -9,8 +9,8 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Around;
 
 import com.bloberryconsulting.aicontextsbridge.model.ApiKey;
-import com.bloberryconsulting.aicontextsbridge.model.Bill;
 import com.bloberryconsulting.aicontextsbridge.model.Context;
+import com.bloberryconsulting.aicontextsbridge.model.User;
 import com.bloberryconsulting.aicontextsbridge.repository.UserRepository;
 import com.bloberryconsulting.aicontextsbridge.service.CryptoService;
 
@@ -34,8 +34,8 @@ public class BillingAspect {
         // This can be the API key, token count, etc.
         final ApiKey apiKeyObject = (ApiKey) joinPoint.getArgs()[0];
         final String message = joinPoint.getArgs()[1].toString();
-        final List<Context> contextHistory = (List<Context>) joinPoint.getArgs()[2];    
-        final String userId = apiKeyObject.getUserId();
+        final List<Context> contexts = (List<Context>) joinPoint.getArgs()[2];
+
         String apiURI = apiKeyObject.getUri();
         final String encodedApiKey = apiKeyObject.getKeyValue();
         final String decodedApiKey = decodeApiKey(apiKeyObject);
@@ -44,24 +44,28 @@ public class BillingAspect {
             apiURI = apiKeyObject.getUri();
         }
 
-        String response = (String) joinPoint.proceed(new Object[] { apiKeyObject, message, contextHistory}); // Call the API service
+        String response = (String) joinPoint.proceed(new Object[] { apiKeyObject, message, contexts }); // Call the API
+                                                                                                        // service
 
-        int tokenCount = calculateTokenCount(response);
+        int tokenCount = calculateTokenCount(response) + calculateTokenCount(message);
 
         // Perform billing calculation
         double totalCost = calculateTotalCost(tokenCount);
+
+        String userId = contexts.get(0).getUserId();
         // You can store the bill information or send it to another service for handling
-        // find bill if it was not found create new one
-        Bill bill = userRepository.findBillByUserId(userId);
-        if (bill == null) {
-            String billId = "bill-" + userId;
-            bill = new Bill(billId, totalCost, TAX);
-            userRepository.createBill(bill);
-        } else {
-            bill.setTotalCost(bill.getTotalCost() + totalCost);
+        // find user and update it credit
+        User user = userRepository.findUserById(userId);
+        user.setCredit(totalCost + user.getCredit());
+        // Ensure that the user's contexts map is initialized
+        if (user.getContexts() == null) {
+            user.setContexts(new HashMap<>());
         }
+        // Use Java 8 forEach to populate the map
+        contexts.forEach(context -> user.getContexts().put(context.getName(), context));
+        userRepository.saveUser(user);
         apiKeyObject.setKeyValue(encodedApiKey);
-        apiKeyObject.setTotalCost(apiKeyObject.getTotalCost() + totalCost);
+        apiKeyObject.setTotalCost(totalCost + apiKeyObject.getTotalCost());
         userRepository.updateApiKey(apiKeyObject);
 
         return response;

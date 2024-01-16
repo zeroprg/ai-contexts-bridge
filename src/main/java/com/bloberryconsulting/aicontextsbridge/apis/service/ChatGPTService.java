@@ -18,6 +18,7 @@ import com.bloberryconsulting.aicontextsbridge.service.JsonUtils;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -68,9 +69,7 @@ public class ChatGPTService implements ApiService {
                 if (documents != null && documents.length > 0) {
                     logger.info("Appending context to user input");
                     JSONArray jsonArray;
-                    if (context.getConversationHistory() == null)
-                        jsonArray = new JSONArray();
-                    else {
+                    if (context.getConversationHistory() != null){
                         try {
                             jsonArray = jsonUtils.read(context.getConversationHistory());
                         } catch (IOException e) {
@@ -100,12 +99,15 @@ public class ChatGPTService implements ApiService {
 
             }
         }
-        return collect.toString() + prompt;
+        return (!collect.isEmpty() ? collect.toString(): "") + prompt;
     }
 
     @Override
     public String getResponse(ApiKey apiKey, String prompt, List<Context> contexts) {
         logger.info("Entering getResponse method");
+        if( contexts == null || contexts.size() == 0){
+            throw new APIError(HttpStatus.INTERNAL_SERVER_ERROR, "Context not provided  ");
+        }
         String userInput = formPromptBasedOnContext(prompt, contexts);
 
         try {
@@ -130,7 +132,8 @@ public class ChatGPTService implements ApiService {
     private String getChatResponse(ApiKey apiKey, String userInput, List<Context> contexts ) {
         logger.info("Entering getChatResponse method");
         // Get the history from the first available context
-        Context context = contexts.get(0);
+        Context latestContext = contexts.stream().max(Comparator.comparing(Context::getLastUsed))
+                                        .orElse(null);
 
         String modelName = apiKey.getModel();
         if (modelName == null || modelName.isEmpty()) {
@@ -141,9 +144,9 @@ public class ChatGPTService implements ApiService {
         JSONObject body = new JSONObject();
         body.put("model", modelName);
 
-        JSONArray messages = maintainHistory(context);
-        if (context.getAssistantRoleMessage() != null) {
-            messages.put(new JSONObject().put("role", "system").put("content", context.getAssistantRoleMessage()));
+        JSONArray messages = maintainHistory(latestContext);
+        if (latestContext.getAssistantRoleMessage() != null) {
+            messages.put(new JSONObject().put("role", "system").put("content", latestContext.getAssistantRoleMessage()));
         }
         messages.put(new JSONObject().put("role", "user").put("content", userInput));
 
@@ -171,7 +174,7 @@ public class ChatGPTService implements ApiService {
             if (response.getStatusCode().is2xxSuccessful()) {
                 String assistantResponse = extractTextFromChatResponse(responseBody);
                 messages.put(new JSONObject().put("role", "assistant").put("content", assistantResponse));
-                context.setConversationHistory(jsonUtils.write(messages));
+                latestContext.setConversationHistory(jsonUtils.write(messages));
                 return assistantResponse;
             } else {
                 logger.error("Received non-2xx status code from OpenAI Chat API");

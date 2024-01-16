@@ -207,11 +207,9 @@ public class UserRepository {
      * @param userId The ID of the user to find.
      * @return The found user, or null if not found.
      */
-    @SuppressWarnings("unchecked")
-    public User findUserById(String userId) {
-        IMap<String, User> userMap = (IMap<String, User>) hazelcastService.getMap(CUSTOMER_MAP);
-        User user = userMap.get(userId);
-        //User user = hazelcastService.restoreUser(userMap, userId);
+   
+    public User findUserById(String userId) {    
+         User user = (User)hazelcastService.retrieveData(CUSTOMER_MAP, userId);
         return user;
     }
 
@@ -220,35 +218,37 @@ public class UserRepository {
      *
      * @param user The user to create.
      */
-    @SuppressWarnings("unchecked")
+  
     public void createUser(User user) {
-        IMap<String, User> map = (IMap<String, User>) hazelcastService.getMap(CUSTOMER_MAP);
-        map.put(user.getId(), user);
-        //hazelcastService.storeUser(map, user);
+        hazelcastService.storeData(CUSTOMER_MAP, user.getId(), user);
     }
+    public void saveUser(User user) {
+        hazelcastService.storeData(CUSTOMER_MAP, user.getId(), user);
+    }
+
 
     /**
      * Updates an existing user in the repository.
      *
      * @param user The user with updated information.
      */
-    @SuppressWarnings("unchecked")
     public void updateUser(User user) {
         if (user.getContexts() != null)
             user.getContexts().forEach((key, value) -> {
                 value.setUserId(user.getId());
             });
-        IMap<String, User> map = (IMap<String, User>) hazelcastService.getMap(CUSTOMER_MAP);
-        //hazelcastService.storeUser(map, user);
-        map.put(user.getId(), user);
+
+        hazelcastService.storeData(CUSTOMER_MAP, user.getId(), user);
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * Retrieves all users stored in the repository.
+     *
+     * @return A collection of all users.
+     */
     public Collection<User> getAllUsers() {
-        Collection<String> userIds = hazelcastService.retrieveAllMapsIds(CUSTOMER_MAP);
-        IMap<String, User> userMap = (IMap<String, User>) hazelcastService.getMap(CUSTOMER_MAP);
-        //return userIds.stream().map(id -> hazelcastService.restoreUser(userMap, id)).collect(Collectors.toList());
-        return userIds.stream().map(id ->userMap.get(id)).collect(Collectors.toList());
+        Collection<User> users = hazelcastService.retrieveAll(CUSTOMER_MAP);
+        return  users;
     }
 
     /**
@@ -347,9 +347,9 @@ public class UserRepository {
      * @param billId The ID of the Bill to find.
      * @return The found Bill, or an empty Optional if not found.
      */
-    public Bill findBillById(String billId) {
+    public Bill findBillById(String userId) {
         return getAllBills().stream()
-                .filter(bill -> billId.equals(bill.getBillId()))
+                .filter(bill -> userId.equals(bill.getUserId()))
                 .findFirst()
                 .orElse(null);
     }
@@ -360,7 +360,7 @@ public class UserRepository {
      * @param bill The Bill to create.
      */
     public void createBill(Bill bill) {
-        hazelcastService.storeData(BILL_MAP, bill.getBillId(), bill);
+        hazelcastService.storeData(BILL_MAP, bill.getUserId(), bill);
     }
 
     /**
@@ -369,7 +369,7 @@ public class UserRepository {
      * @param bill The Bill with updated information.
      */
     public void updateBill(Bill bill) {
-        hazelcastService.storeData(BILL_MAP, bill.getBillId(), bill);
+        hazelcastService.storeData(BILL_MAP, bill.getUserId(), bill);
     }
 
     /**

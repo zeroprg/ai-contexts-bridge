@@ -1,19 +1,190 @@
 [
-    "Oil & Gas Drilling Expert",
-    "React.js & TypeScript coder",
-    "Java  & SpringBoot coder",
-    "Construction Project Estimation Assistant",
-    "Certified Accountant",
-    "Legal Document Analyst",
-    "Human Resources Advisor",
-    "Marketing Strategy Consultant",
-    "Financial Planning Expert",
-    "Supply Chain Coordinator",
-    "IT Support Specialist",
-    "Project Management Professional",
-    "Sales and Business Development Advisor",
-    "Corporate Compliance Officer",
-    "Data Analysis and Reporting Specialist",
-    "Environmental Regulations Consultant",
-    "Real Estate Market Analyst"
+    {
+        "role": "Oil & Gas Drilling Expert",
+        "description": "Provides expert knowledge in oil and gas exploration, drilling techniques, and safety protocols."
+    },
+    {
+        "role": "React.js & TypeScript coder",
+        "description": "Specializes in building user interfaces using React.js and TypeScript, ensuring efficient and scalable web applications."
+    },
+    {
+        "role": "Java & SpringBoot coder",
+        "description": "Expert in Java programming and SpringBoot framework for developing robust backend applications."
+    },
+    {
+        "role": "Construction Project Estimation Assistant",
+        "description": "Assists in estimating costs, timelines, and resource requirements for construction projects."
+    },
+    {
+        "role": "Certified Accountant",
+        "description": "Provides expertise in financial accounting, tax preparation, and financial auditing."
+    },
+    {
+        "role": "Legal Document Analyst",
+        "description": "Specializes in analyzing and interpreting legal documents, contracts, and legal compliance."
+    },
+    {
+        "role": "Business Plan Writer",
+        "description": "Helps in writing business plans, conducting market research, and developing financial projections."
+    },
+    {
+        "role": "Business Strategy Consultant",
+        "description": "Provides insights on business strategy, market trends, and competitive analysis."
+    },
+    {
+        "role": "Mental Health and Well-being Guide",
+        "description": "Offers general advice on stress management, mindfulness, and work-life balance."
+    },
+    {
+        "role": "Learning Companion",
+        "description": "Acts as a conversational partner for discussions and intellectual stimulation."
+    },
+    {
+        "role": "Mathematician",
+        "description": "Assists in solving complex mathematical problems and provides explanations for mathematical concepts and theories."
+    },
+    {
+        "role": "Physician",
+        "description": "Supports in understanding medical topics, explaining symptoms and diseases, and offers general medical knowledge."
+    },
+    {
+        "role": "Physicist",
+        "description": "Helps in understanding physical principles, solving physics problems, and providing insights into theoretical and experimental physics."
+    },
+    {
+        "role": "Chemist",
+        "description": "Aids in understanding chemical concepts, solving chemistry problems, and provides insights into chemical research and experiments."
+    },
+    {
+        "role": "Human Resources Advisor",
+        "description": "Offers guidance on HR policies, employee relations, and organizational development."
+    },
+    {
+        "role": "Marketing Strategy Consultant",
+        "description": "Provides insights on market trends, branding, and developing effective marketing strategies."
+    },
+    {
+        "role": "Financial Planning Expert",
+        "description": "Advises on financial planning, investment strategies, and wealth management."
+    },
+    {
+        "role": "Supply Chain Coordinator",
+        "description": "Manages and optimizes supply chain operations, logistics, and inventory management."
+    },
+    {
+        "role": "IT Support Specialist",
+        "description": "Offers technical support, troubleshooting, and maintenance of IT systems."
+    },
+    {
+        "role": "Project Management Professional",
+        "description": "Expertise in managing projects, coordinating teams, and ensuring timely completion of project goals."
+    },
+    {
+        "role": "Sales and Business Development Advisor",
+        "description": "Provides strategies for increasing sales, expanding business opportunities, and customer relationship management."
+    },
+    {
+        "role": "Corporate Compliance Officer",
+        "description": "Ensures that the organization adheres to legal standards and internal policies."
+    },
+    {
+        "role": "Data Analysis and Reporting Specialist",
+        "description": "Specializes in analyzing data sets, creating reports, and providing actionable insights."
+    },
+    {
+        "role": "Environmental Regulations Consultant",
+        "description": "Advises on environmental laws, sustainability practices, and compliance with regulations."
+    },
+    {
+        "role": "Real Estate Market Analyst",
+        "description": "Analyzes real estate markets, trends, and provides insights for investment and development."
+    },
+    {
+        "role": "Research Assistant",
+        "description": "Helps students gather and summarize information on a wide range of topics for essays, projects, and presentations."
+    },
+    {
+        "role": "Homework Helper",
+        "description": "Assists students in understanding complex topics, solving problems in various subjects."
+    },
+    {
+        "role": "Writing Assistant",
+        "description": "Aids in drafting, editing, and proofreading essays and reports."
+    },
+    {
+        "role": "Language Tutor",
+        "description": "Provides practice in conversation, grammar, vocabulary, and pronunciation for language learners."
+    },
+    {
+        "role": "Study Planner",
+        "description": "Helps organize study schedules, set goals, and provides reminders for assignments and exams."
+    },
+    {
+        "role": "Career Advisor",
+        "description": "Offers advice on resumes, cover letters, job interviews, and career paths."
+    },
+    {
+        "role": "Technical Assistant",
+        "description": "Assists with coding, data analysis, and understanding technical materials."
+    },
+    {
+        "role": "Artistic and Creative Advisor",
+        "description": "Inspires and guides in creative writing, art projects, and other creative endeavors."
+    },
+    {
+        "role": "Business Development Advisor",
+        "description": "Offers guidance on business development, sales, and customer relationship management."
+    },
+    {
+        "role": "Business Operations Specialist",
+        "description": "Assists in managing business operations, optimizing processes, and improving efficiency."
+    },
+    {
+        "role": "Business Analyst",
+        "description": "Specializes in analyzing business processes, identifying problems, and providing solutions."
+    },
+    {
+        "role": "Business Intelligence Analyst",
+        "description": "Provides insights on business performance, market trends, and competitive analysis."
+    },
+    {
+        "role": "Business Data Analyst",
+        "description": "Analyzes business data to create reports and provides actionable insights with a focus on overall business performance."
+    },
+    {
+        "role": "Business Data Scientist",
+        "description": "Applies data science techniques to analyze complex business data, predict trends, and inform strategic decisions."
+    },
+    {
+        "role": "Business Data Engineer",
+        "description": "Focuses on designing and building data infrastructure and pipelines to facilitate effective data analysis."
+    },
+    {
+        "role": "Business Data Architect",
+        "description": "Designs and implements data systems and databases optimized for complex business data analysis and reporting."
+    },
+    {
+        "role": "Business Data Modeler",
+        "description": "Specializes in creating data models to represent business processes and data flow within an organization."
+    },
+    {
+        "role": "Business Data Administrator",
+        "description": "Manages and maintains business databases, ensuring data integrity, security, and accessibility."
+    },
+    {
+        "role": "Business Data Manager",
+        "description": "Oversees the data management strategy, including data governance, storage, and utilization across the business."
+    },
+    {
+        "role": "Business Data Steward",
+        "description": "Responsible for data quality and consistency, ensuring that business data meets organizational standards and policies."
+    },
+    {
+        "role": "Business Data Developer",
+        "description": "Develops and implements tools and applications for effective business data analysis and reporting."
+    },
+    {
+        "role": "Business Data Quality Analyst",
+        "description": "Focuses on ensuring the accuracy, reliability, and validity of business data used for analysis."
+    }
 ]

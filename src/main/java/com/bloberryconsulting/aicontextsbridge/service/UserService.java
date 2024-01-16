@@ -15,11 +15,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -30,7 +31,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 @Service
 public class UserService {
-
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
     private final ResourceLoader resourceLoader;
     private final CryptoService cryptoService;
@@ -211,6 +212,33 @@ public class UserService {
                     .map(Map.Entry::getValue).collect(Collectors.toList());
         }
         return null;
+    }
+
+
+    /**
+     * Update the user's credit based on their email.
+     * @param userEmail The email of the user.
+     * @param amountToAdd The amount to add to the user's credit.
+     */
+    public void updateCredit(String userEmail, double amountToAdd) {
+        try {
+            User user = userRepository.findUserByEmail(userEmail); // Assuming findByEmail is a method in your repository
+
+            if (user != null) {
+                double currentCredit = user.getCredit();
+                double updatedCredit = currentCredit - amountToAdd;
+                user.setCredit(updatedCredit);
+
+                userRepository.saveUser(user); // Persist the updated user entity
+                log.info("Updated credit for user with email {}: new credit is {}", userEmail, updatedCredit);
+            } else {
+                log.warn("User with email {} not found.", userEmail);
+                // Handle the case where the user is not found
+            }
+        } catch (Exception e) {
+            log.error("Error updating credit for user with email {}: {}", userEmail, e.getMessage(), e);
+            // Handle any exceptions
+        }
     }
 
     public boolean deleteFile(User user, String sessionId, String fileId) {
