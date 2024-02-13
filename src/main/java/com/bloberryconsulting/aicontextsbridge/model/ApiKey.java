@@ -21,6 +21,7 @@ public class ApiKey  implements Serializable {
     private Double totalCost = 0.0; //Total charged for this api key
     private boolean publicAccessed; //Is it Public accessed
     private boolean defaultKey;
+    private boolean disabled; //Is it disabled if true will be disabled and showen as aka default key
     private String model; // Model name
     private String description; // Description
 }

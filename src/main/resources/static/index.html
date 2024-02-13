@@ -77,37 +77,64 @@
             <p>This project is a web-based application designed to manage user information and API interactions. The 'ApiController' handles various API-related functionalities, including viewing, creating, and managing API keys, client profiles, and customer queries. The 'UserController' focuses on user-related operations, such as retrieving user information, selecting APIs for users, and assigning roles. Secure access is enforced through different roles, ensuring that each endpoint is accessed only by authorized users. The communication flow is designed to be straightforward, with clear endpoints for each specific task.</p>
         </div>
  
-        <!-- ApiController -->
-        <div class="card">
-            <h2>ApiController</h2>
+    
+
+        <section class="api-controller card">
+            <h2>API Controller</h2>
+            <p>The ApiController is designed to manage API interactions and user requests for transcription services, API key management, and more. It incorporates security with role-based access control, ensuring that only authorized users can execute specific operations.</p>
             <h3>Endpoints:</h3>
-            <p>GET /api/v1/keys/manage: View API keys</p>
-            <p>POST /api/v1/keys/manage: Create API key</p>
-            <p>GET /api/v1/client/profiles: View all profiles</p>
-            <p>GET /api/v1/client/{clientId}/profile: View client profile</p>
-            <p>POST /api/v1/api/v1/client/profile: Manage client profile</p>
-            <p>PUT /api/v1/client/profile: Update client profile</p>
-            <p>GET /api/v1/customer/query: Query customer information</p>
-            <h3>Methods:</h3>
-            <p>viewApiKeys, createApiKey, viewAllProfiles, viewClientProfile, manageClientProfile, updateClient, queryCustomer</p>
+            <ul>
+                <li>
+                    <code>@PostMapping("/transcription")</code>: Uploads audio files for transcription. Utilizes the WhisperTranscribe service for processing and returns the transcription text.
+                </li>
+                <li>
+                    <code>@GetMapping("/keys/manage")</code>: Retrieves API keys owned by the current user or their company. Implements OAuth for security.
+                </li>
+                <li>
+                    <code>@PostMapping("/keys/manage")</code>: Allows creating new API keys and associating them with the current user's profile.
+                </li>
+                <li>
+                    <code>@GetMapping("/client/profiles")</code>: Provides a list of all client profiles, accessible to site administrators for oversight.
+                </li>
+            </ul>
             <h3>Security Roles:</h3>
             <p>ROLE_CUSTOMER, ROLE_SITE_ADMINISTRATOR, ROLE_CLIENT_ADMINISTRATOR</p>
-        </div>
-        <!-- UserController -->
-        <div class="card">
-            <h2>UserController</h2>
+        </section>
+        <section class="user-controller card">
+            <h2>User Controller</h2>
+            <p>The UserController focuses on operations related to user management, including information retrieval, API selection for users, and user-client association. It ensures secure access through authentication and authorization mechanisms.</p>
             <h3>Endpoints:</h3>
-            <p>GET /user/info: Get user information</p>
-            <p>PUT /user/{apiKey}/selectAPI: Select an API for a user</p>
-            <p>PUT /user/{userId}/attach/{clientId}: Attach a user to a client</p>
-            <p>GET /user/findByEmail: Find user by email</p>
-            <p>GET /user/findByName: Find user by name</p>
-            <p>POST /user/assignRole: Assign role to user</p>
-            <h3>Methods:</h3>
-            <p>getUserInfo, selectAPI, attachUserToClient, getUserByEmail, getUserByName, assignRoleToUser</p>
+            <ul>
+                <li>
+                    <code>@GetMapping("/info")</code>: Retrieves details about the currently authenticated user, leveraging OAuth2 for security.
+                </li>
+                <li>
+                    <code>@PutMapping("/selectAPI/{apiKey}")</code>: Assigns a specified API to the current user, updating their profile with the new API key.
+                </li>
+                <li>
+                    <code>@PutMapping("/{userId}/attach/{clientId}")</code>: Attaches a user to a client, enabling them to utilize the client's APIs.
+                </li>
+                <li>
+                    <code>@GetMapping("/findByEmail")</code>: Searches for a user by their email address, useful for administrative tasks and user support.
+                </li>
+            </ul>
             <h3>Security Roles:</h3>
-            <p>ROLE_CLIENT_ADMINISTRATOR, ROLE_SITE_ADMINISTRATOR, ROLE_APIKEY_MANAGER</p>
-        </div>
+            <p>ROLE_CUSTOMER, ROLE_SITE_ADMINISTRATOR, ROLE_CLIENT_ADMINISTRATOR</p>
+        </section>
+        <section class="stripe-controller card">
+            <h2>Stripe Payment Controller</h2>
+            <p>This controller is responsible for creating Stripe Checkout Sessions. It initializes with the Stripe API key and sets up payment sessions with configurable amounts and success or cancellation URLs. The session creation endpoint takes payment details, creates a checkout session, and returns a session ID for frontend redirection to the Stripe payment page.</p>
+            <code>@PostMapping("/stripepayment/create-checkout-session")</code>
+            <p>The amount is dynamically mapped to price IDs configured in Stripe, allowing for flexible payment options. Successful payment sessions redirect users to a success page, and metadata including the user's ID is attached for tracking and confirmation purposes.</p>
+        </section>
+        <section class="stripe-webhook-controller card">
+            <h2>Stripe Webhook Controller</h2>
+            <p>This controller handles webhook events from Stripe, particularly focusing on the completion of checkout sessions. It verifies the event signature to ensure legitimacy, then processes the event data to perform actions such as updating user credits based on the payment amount.</p>
+            <code>@PostMapping("/stripepayment/webhook")</code>
+            <p>Upon receiving a "checkout.session.completed" event, the controller extracts customer details and the payment amount from the session data. It then updates the corresponding user's credit in the system, based on the customer's email and the total payment amount. This automated process ensures that user credits are accurately and efficiently managed following successful transactions.</p>
+        </section>          
+
+
     </div>
 </body>
 </html>

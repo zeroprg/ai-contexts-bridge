@@ -2,23 +2,51 @@
     {
         "keyId": "api_key_1",
         "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
+        "name": "OpenAI",
         "uri": "https://api.openai.com/v1/chat/completions",
         "homepage": "https://api.openai.com/",
         "userId": "zeroprg@gmail.com",
         "publicAccessed": true,
         "defaultKey": false,
-        "maxContextLength": 4096,
+        "maxContextLength": 128000,
         "totalCost": 0.0,
         "description": "GPT-4 model, the latest generation for advanced AI applications.",
         "model": "gpt-4-1106-preview"
     },
-
+    {
+        "keyId": "api_key_1.1",
+        "keyValue": "${API_KEY}",
+        "name": "OpenAI",
+        "uri": "https://api.openai.com/v1/chat/completions",
+        "homepage": "https://api.openai.com/",
+        "userId": "zeroprg@gmail.com",
+        "publicAccessed": true,
+        "defaultKey": false,
+        "maxContextLength": 128000,
+        "totalCost": 0.0,
+        "description": "The latest GPT-4 model intended to reduce cases of 'laziness' where the model doesn’t complete a task. Returns a maximum of 4,096 output tokens.",
+        "model": "gpt-4-0125-preview"
+    }, 
+    {
+        "keyId": "api_key_1.2",
+        "keyValue": "${API_KEY}",
+        "name": "OpenAI",
+        "uri": "https://api.openai.com/v1/chat/completions",
+        "homepage": "https://api.openai.com/",
+        "userId": "zeroprg@gmail.com",
+        "publicAccessed": true,
+        "defaultKey": false,
+        "maxContextLength": 8192,
+        "totalCost": 0.0,
+        "description": "Snapshot of gpt-4 from June 13th 2023 with improved function calling support.",
+        "model": "gpt-4-0613"
+    }, 
+    
     
     {
         "keyId": "api_key_2",
         "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
+        "name": "OpenAI",
         "uri": "https://api.openai.com/v1/chat/completions",
         "homepage": "https://api.openai.com/",
         "userId": "zeroprg@gmail.com",
@@ -33,7 +61,7 @@
     {
         "keyId": "api_key_3",
         "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
+        "name": "OpenAI",
         "uri": "https://api.openai.com/v1/chat/completions",
         "homepage": "https://api.openai.com/",
         "userId": "zeroprg@gmail.com",
@@ -47,8 +75,9 @@
     
     {
         "keyId": "api_key_4",
+        "disabled": true,
         "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
+        "name": "OpenAI",
         "uri": "https://api.openai.com/v1/engines/dall-e/completions",
         "homepage": "https://api.openai.com/",
         "userId": "zeroprg@gmail.com",
@@ -61,8 +90,9 @@
     },
     {
         "keyId": "api_key_5",
+        "disabled": true,
         "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
+        "name": "OpenAI",
         "uri": "https://api.openai.com/v1/engines/tts/completions",
         "homepage": "https://api.openai.com/",
         "userId": "zeroprg@gmail.com",
@@ -75,22 +105,23 @@
     },
     {
         "keyId": "api_key_6",
+        "disabled": true,
         "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
-        "uri": "https://api.openai.com/v1/engines/whisper/completions",
+        "name": "OpenAI",
+        "uri": "https://api.openai.com/v1/audio/transcriptions",
         "homepage": "https://api.openai.com/",
         "userId": "zeroprg@gmail.com",
         "publicAccessed": true,
         "defaultKey": false,
         "maxContextLength": 0,
         "totalCost": 0.0,
-        "description": "Whisper model, designed for speech-to-text tasks.",
+        "description": "Whisper model, designed for speech-to-text tasks. Used as default.",
         "model": "whisper"
     },
     {
         "keyId": "api_key_7",
         "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
+        "name": "OpenAI",
         "uri": "https://api.openai.com/v1/chat/completions",
         "homepage": "https://api.openai.com/",
         "userId": "zeroprg@gmail.com",
@@ -104,7 +135,7 @@
     {
         "keyId": "api_key_8",
         "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
+        "name": "OpenAI",
         "uri": "https://api.openai.com/v1/chat/completions",
         "homepage": "https://api.openai.com/",
         "userId": "zeroprg@gmail.com",
@@ -118,7 +149,7 @@
     {
         "keyId": "api_key_9",
         "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
+        "name": "OpenAI",
         "uri": "https://api.openai.com/v1/chat/completions",
         "homepage": "https://api.openai.com/",
         "userId": "zeroprg@gmail.com",
@@ -132,7 +163,7 @@
     {
         "keyId": "api_key_10",
         "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
+        "name": "OpenAI",
         "uri": "https://api.openai.com/v1/chat/completions",
         "homepage": "https://api.openai.com/",
         "userId": "zeroprg@gmail.com",
@@ -142,49 +173,5 @@
         "totalCost": 0.0,
         "model": "gpt-3.5-turbo",
         "description": "GPT-3.5 Turbo model, optimized for chat-like interactions."
-    },
-
-
-    {
-        "keyId": "api_key_14",
-        "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
-        "uri": "https://api.openai.com/v1/engines/text-davinci-003/completions",
-        "homepage": "https://api.openai.com/",
-        "userId": "zeroprg@gmail.com",
-        "publicAccessed": true,
-        "defaultKey": false,
-        "maxContextLength": 4096,
-        "totalCost": 0.0,
-        "model": "text-davinci-003",
-        "description": "Code-Davinci  model for code-related tasks.."
-    },
-    {
-        "keyId": "api_key_15",
-        "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
-        "uri": "https://api.openai.com/v1/engines/text-davinci-002/completions",
-        "homepage": "https://api.openai.com/",
-        "userId": "zeroprg@gmail.com",
-        "publicAccessed": true,
-        "defaultKey": false,
-        "maxContextLength": 4096,
-        "totalCost": 0.0,
-        "model": "text-davinci-002",
-        "description": "Code-Davinci purpose model for code-related tasks.."
-    },
-    {
-        "keyId": "api_key_16",
-        "keyValue": "${API_KEY}",
-        "name": "ChatGPT",
-        "uri": "https://api.openai.com/v1/engines/code-davinci-002/completions",
-        "homepage": "https://api.openai.com/",
-        "userId": "zeroprg@gmail.com",
-        "publicAccessed": true,
-        "defaultKey": false,
-        "maxContextLength": 8001,
-        "totalCost": 0.0,
-        "model": "code-davinci-002",
-        "description": "Code-Davinci model, optimized for code-related tasks."
     }
 ]

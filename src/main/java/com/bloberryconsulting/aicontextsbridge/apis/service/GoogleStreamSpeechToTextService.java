@@ -1,169 +1,276 @@
 package com.bloberryconsulting.aicontextsbridge.apis.service;
-
+import com.bloberryconsulting.aicontextsbridge.apis.service.tools.AudioProcessingService;
+import com.bloberryconsulting.aicontextsbridge.exceptions.APIError;
 import com.bloberryconsulting.aicontextsbridge.model.ApiKey;
 import com.bloberryconsulting.aicontextsbridge.model.Context;
-import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.api.gax.rpc.ApiStreamObserver;
-import com.google.api.gax.rpc.BidiStreamingCallable;
-import com.google.auth.oauth2.GoogleCredentials;
+import com.google.api.gax.rpc.ClientStream;
+import com.google.api.gax.rpc.ResponseObserver;
+import com.google.api.gax.rpc.StreamController;
 import com.google.cloud.speech.v1.*;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Duration;
+
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import javax.sound.sampled.TargetDataLine;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 
-import javax.annotation.PostConstruct;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+// example of calling: " infiniteStreamingRecognize(options.langCode, base64EncodedAudioChunks);"
 
 @Service
-public class GoogleStreamSpeechToTextService implements ApiService {
+@Profile("notActiveProfile")
+public class GoogleStreamSpeechToTextService extends AbstractGoogleAPIs implements ApiService, AudioProcessingService{
     private final Logger logger = LoggerFactory.getLogger(GoogleStreamSpeechToTextService.class);
 
-    @Value("${google.credentials.file.path}")
-    private String apiKeyFilePath;
-    private SpeechSettings speechSettings;
+    public static final String SERVICE_IDENTIFIER = "GoogleStreamSpeechToTextService";
+    private static final int STREAMING_LIMIT = 290000; // ~5 minutes
 
-    private final Map<String, Boolean> activeSessions = new ConcurrentHashMap<>();
+    private static final String RED = "\033[0;31m";
+    private static final String GREEN = "\033[0;32m";
+    private static final String YELLOW = "\033[0;33m";
 
-    private final BlockingQueue<ByteString> requestQueue = new LinkedBlockingQueue<>();
-    private final BlockingQueue<StreamingRecognizeResponse> responseQueue = new LinkedBlockingQueue<>();
-    //private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-    @PostConstruct
-    public void init() throws IOException {
-        GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(apiKeyFilePath));
-        this.speechSettings = SpeechSettings.newBuilder()
-                .setCredentialsProvider(FixedCredentialsProvider.create(credentials)).build();
+    // Creating shared object
+  private static volatile BlockingQueue<byte[]> sharedQueue = new LinkedBlockingQueue<byte[]>();
+  private static TargetDataLine targetDataLine;
+  private static int BYTES_PER_BUFFER = 6400; // buffer size in bytes
+
+    private static ArrayList<ByteString> audioInput = new ArrayList<>();
+    
+    private static ArrayList<ByteString> lastAudioInput = new ArrayList<>();
+    private static int restartCounter = 0;
+    private static int resultEndTimeInMS = 0;
+    private static int isFinalEndTime = 0;
+    private static int finalRequestEndTime = 0;
+    private static boolean newStream = true;
+    private static double bridgingOffset = 0;
+    private static boolean lastTranscriptWasFinal = false;
+    private static StreamController referenceToStreamController;
+
+    private WebSocketSession session;
+   
+
+
+
+    public static String convertMillisToDate(double milliSeconds) {
+        long millis = (long) milliSeconds;
+        DecimalFormat format = new DecimalFormat();
+        format.setMinimumIntegerDigits(2);
+        return String.format(
+                "%s:%s /",
+                format.format(TimeUnit.MILLISECONDS.toMinutes(millis)),
+                format.format(
+                        TimeUnit.MILLISECONDS.toSeconds(millis)
+                                - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis))));
     }
 
-    public void startStreaming(String sessionId) throws Exception {
-        // Check if streaming is already active for this session
-        if (activeSessions.putIfAbsent(sessionId, true) != null) {
-            logger.info("Streaming is already active for session {}", sessionId);
-            return; // Exit if streaming is already started for this session
+    private CompletableFuture<Void> future = new CompletableFuture<>();
+    public CompletableFuture<Void> getFuture() {
+        return future;
+    }
+    
+
+
+    public void infiniteStreamingRecognize(String languageCode, List<String> base64EncodedAudioChunks) throws Exception  {
+        ResponseObserver<StreamingRecognizeResponse> responseObserver = setupResponseObserver();
+  
+        
+        try(SpeechClient client = SpeechClient.create(speechSettings)){            
+            
+            ClientStream<StreamingRecognizeRequest> clientStream = setupClientStream(client, languageCode, responseObserver);
+            long startTime = System.currentTimeMillis();
+            getFuture().get();
+            if(clientStream != null && clientStream.isSendReady()){
+            for (String base64EncodedAudioChunk : base64EncodedAudioChunks) {
+                processAudioChunk(base64EncodedAudioChunk, clientStream);
+                manageStreamingSession(client, clientStream, responseObserver, startTime, languageCode );
+            }
         }
-        try (SpeechClient speechClient = SpeechClient.create(speechSettings)) {
-            BidiStreamingCallable<StreamingRecognizeRequest, StreamingRecognizeResponse> callable = speechClient.streamingRecognizeCallable();
+        } catch (Exception e) {
+            Thread.currentThread().interrupt();
+            throw new APIError(HttpStatus.INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
+        }    
+        
+    }
+    
 
-            // Start request handling thread
-            Thread requestHandlingThread = new Thread(() -> handleRequests(callable));
-            requestHandlingThread.start();
-
-            // Start response handling thread
-            Thread responseHandlingThread = new Thread(() -> handleResponses(sessionId));
-            responseHandlingThread.start();
-
-            // Wait for threads to complete
-            requestHandlingThread.join();
-            responseHandlingThread.join();
-        }
+    private static ClientStream<StreamingRecognizeRequest> setupClientStream(SpeechClient client, String languageCode, ResponseObserver<StreamingRecognizeResponse> responseObserver) {
+        ClientStream<StreamingRecognizeRequest> clientStream = client.streamingRecognizeCallable().splitCall(responseObserver);
+        sendInitialRequest(clientStream, languageCode);
+        return clientStream;
     }
 
-    public void streamAudio(byte[] audioBytes) {
-        if (audioBytes != null && audioBytes.length > 0) {
-            requestQueue.add(ByteString.copyFrom(audioBytes));
+    private static void sendInitialRequest(ClientStream<StreamingRecognizeRequest> clientStream, String languageCode) {
+        RecognitionConfig recognitionConfig = RecognitionConfig.newBuilder()
+                .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
+                .setLanguageCode(languageCode)
+                .setSampleRateHertz(16000)
+                .build();
+
+        StreamingRecognitionConfig streamingRecognitionConfig = StreamingRecognitionConfig.newBuilder()
+                .setConfig(recognitionConfig)
+                .setInterimResults(true)
+                .build();
+
+        StreamingRecognizeRequest request = StreamingRecognizeRequest.newBuilder()
+                .setStreamingConfig(streamingRecognitionConfig)
+                .build(); // The first request in a streaming call has to be a config
+
+        clientStream.send(request);
+    }
+
+    private  ResponseObserver<StreamingRecognizeResponse> setupResponseObserver() {
+        return new ResponseObserver<StreamingRecognizeResponse>() {
+            ArrayList<StreamingRecognizeResponse> responses = new ArrayList<>();
+
+            public void onStart(StreamController controller) {
+                referenceToStreamController = controller;
+            }
+
+            public void onResponse(StreamingRecognizeResponse response) {
+                processResponse(response);
+            }
+
+            public void onComplete() {
+            }
+
+            public void onError(Throwable t) {
+                logger.error("Error in response observer: " + t.getMessage());                
+                future.completeExceptionally(new APIError(HttpStatus.INTERNAL_SERVER_ERROR, t.getLocalizedMessage()));       
+            }
+
+            private void processResponse(StreamingRecognizeResponse response) {
+                responses.add(response);
+                StreamingRecognitionResult result = response.getResultsList().get(0);
+                Duration resultEndTime = result.getResultEndTime();
+                resultEndTimeInMS =
+                    (int)
+                        ((resultEndTime.getSeconds() * 1000) + (resultEndTime.getNanos() / 1000000));
+                double correctedTime =
+                    resultEndTimeInMS - bridgingOffset + (STREAMING_LIMIT * restartCounter);
+  
+                SpeechRecognitionAlternative alternative = result.getAlternativesList().get(0);
+                if (result.getIsFinal()) {
+                  System.out.print(GREEN);
+                  System.out.print("\033[2K\r");
+                  System.out.printf(
+                      "%s: %s [confidence: %.2f]\n",
+                      convertMillisToDate(correctedTime),
+                      alternative.getTranscript(),
+                      alternative.getConfidence());
+
+                      onTranscriptionResult(session, alternative.getTranscript());   
+                  isFinalEndTime = resultEndTimeInMS;
+                  lastTranscriptWasFinal = true;
+                } else {
+                  System.out.print(RED);
+                  System.out.print("\033[2K\r");
+                  System.out.printf(
+                      "%s: %s", convertMillisToDate(correctedTime), alternative.getTranscript());
+                  lastTranscriptWasFinal = false;
+                }
+              }
+
+            private void onTranscriptionResult(WebSocketSession session, String transcript) {
+                try {
+                    session.sendMessage (new TextMessage(transcript));
+                } catch (IOException e) {    
+                    throw new APIError(HttpStatus.INTERNAL_SERVER_ERROR, e.getLocalizedMessage() + "for: "+transcript);
+                }           
+            }
+        };
+    }
+
+    // Process a single Base64 encoded audio chunk
+    public void processAudioChunk(String base64EncodedAudio, ClientStream<StreamingRecognizeRequest> clientStream) {
+        byte[] audioBytes = Base64.getDecoder().decode(base64EncodedAudio);
+        ByteString audioByteString = ByteString.copyFrom(audioBytes);
+        audioInput.add(audioByteString);
+
+        StreamingRecognizeRequest request = StreamingRecognizeRequest.newBuilder().setAudioContent(audioByteString).build();
+        clientStream.send(request);
+    }
+
+    private void manageStreamingSession(SpeechClient client, ClientStream<StreamingRecognizeRequest> clientStream, ResponseObserver<StreamingRecognizeResponse> responseObserver, long startTime, String languageCode) throws Exception {
+        long estimatedTime = System.currentTimeMillis() - startTime;
+        
+        if (estimatedTime >= STREAMING_LIMIT) {
+          handleStreamingLimitReached(client, clientStream, responseObserver, languageCode);
+          startTime = System.currentTimeMillis();
         } else {
-            logger.warn("Received empty audio bytes for streaming");
+          sendAudioData(clientStream);
         }
     }
     
-    public void stopStreaming(String sessionId) {
-        // Add end-of-stream marker to the request queue
-        requestQueue.add(ByteString.EMPTY);
-        activeSessions.remove(sessionId); // Remove the session from active sessions
-
-        // Optionally, perform additional actions such as cleaning up resources 
-        // or notifying other components that the streaming session has ended.
-        logger.info("Streaming stopped for session {}", sessionId);
+    private  void sendAudioData(ClientStream<StreamingRecognizeRequest> clientStream) throws InterruptedException {
+        ByteString tempByteString = ByteString.copyFrom(sharedQueue.take());
+        StreamingRecognizeRequest request = StreamingRecognizeRequest.newBuilder().setAudioContent(tempByteString).build();
+        audioInput.add(tempByteString);
+        clientStream.send(request);
     }
-    
 
-    private void handleRequests(BidiStreamingCallable<StreamingRecognizeRequest, StreamingRecognizeResponse> callable) {
-        ApiStreamObserver<StreamingRecognizeRequest> requestObserver = 
-            callable.bidiStreamingCall(new ApiStreamObserver<StreamingRecognizeResponse>() {
-                @Override
-                public void onNext(StreamingRecognizeResponse response) {
-                    responseQueue.add(response);
-                }
+    private void handleStreamingLimitReached(SpeechClient client, ClientStream<StreamingRecognizeRequest> clientStream, ResponseObserver<StreamingRecognizeResponse> responseObserver, String languageCode) {
+            clientStream.closeSend();
+            referenceToStreamController.cancel(); // remove Observer
 
-                @Override
-                public void onError(Throwable throwable) {
-                    // Handle error
-                }
-
-                @Override
-                public void onCompleted() {
-                    // Handle completion
-                }
-            });
-    
-        try {
-            while (true) {
-                ByteString audioChunk = requestQueue.take();
-                if (audioChunk.isEmpty()) { // End-of-stream marker
-                    break;
-                }
-                StreamingRecognizeRequest request = StreamingRecognizeRequest.newBuilder()
-                    .setAudioContent(audioChunk)
-                    .build();
-                requestObserver.onNext(request);
+            if (resultEndTimeInMS > 0) {
+              finalRequestEndTime = isFinalEndTime;
             }
-        } catch (InterruptedException e) {
-            logger.info("Request handling thread interrupted", e);
-            // Optionally handle interruption
-        } finally {
-            requestObserver.onCompleted();
-        }
+            resultEndTimeInMS = 0;
+            
+            lastAudioInput = new ArrayList<>(audioInput);
+            audioInput.clear();
+            
+            clientStream = client.streamingRecognizeCallable().splitCall(responseObserver);
+            sendInitialRequest(clientStream, languageCode);
+            
+            System.out.println(YELLOW);
+            System.out.printf("%d: RESTARTING REQUEST\n", ++restartCounter * STREAMING_LIMIT);
     }
+
     
-    private void handleResponses(String sessionId) {
-        try {
-            while (true) {
-                StreamingRecognizeResponse response = responseQueue.take();
-                if (isEndOfStreamMarker(response)) {
-                    break; // Exit loop if end-of-stream marker is detected
-                }
-                processResponse(sessionId, response);
-            }
-        } catch (InterruptedException e) {
-            logger.info("Response handling thread interrupted", e);
-            // Optionally handle interruption
-        }
-    }
-    
-    private boolean isEndOfStreamMarker(StreamingRecognizeResponse response) {
-        // Implement logic to determine if this response is the end-of-stream marker
-        // This could be based on a flag in your application logic
-        return false; // Placeholder implementation
-    }
-    
-    private void processResponse(String sessionId, StreamingRecognizeResponse response) {
-        // Process each response
-        // Example: Extracting and logging the transcript
-        response.getResultsList().stream()
-            .filter(StreamingRecognitionResult::getIsFinal)
-            .flatMap(result -> result.getAlternativesList().stream())
-            .forEach(alternative -> logger.info("Transcript: {}", alternative.getTranscript()));
+
+
+    // New method for getting a response from a base64 encoded audio
+    public String getResponse(String languageCode, String base64EncodedAudio) {
+        // Implementation of API call logic using base64EncodedAudio
+        return null; // Placeholder for actual implementation
     }
 
     @Override
     public String getResponse(ApiKey apiKey, String message, List<Context> contextHistory) {
-      return null;    }
+        return null; 
+    }
 
     @Override
     public String getApiId() {
-        return "Google Speech-to-Text Stream API Key";
+        return  SERVICE_IDENTIFIER;
     }
-    
-    // Additional methods and logic as needed...
-}    
+
+    @Override
+    public void processAudioChunks(WebSocketSession session, String languageCode, List<String> base64EncodedAudioChunks) throws Exception {
+        this.session = session;
+        infiniteStreamingRecognize(languageCode, base64EncodedAudioChunks);
+
+    }
+
+    @Override
+    public String getProcessorIdentifier() {
+       return  SERVICE_IDENTIFIER;
+    }
+}

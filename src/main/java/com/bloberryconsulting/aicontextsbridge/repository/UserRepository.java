@@ -127,6 +127,14 @@ public class UserRepository {
                 .collect(Collectors.toList());
     }
 
+    public Optional<ApiKey> findApiKeysByModel(String modelName) {
+
+        Collection<ApiKey> keys = hazelcastService.retrieveAll(API_KEYS_MAP);
+        return keys.stream()
+                .filter(apiKey -> modelName.equals(apiKey.getModel()))
+                .findFirst();
+    }
+
     // Profile Details specific methods
 
     /**

@@ -105,7 +105,7 @@ public class UserService {
                     apiKey.setKeyId(keyId);
                     if (apiKey.isDefaultKey())
                         user.setRecentApiId(apiKey.getKeyId());// always set the most recent API key as the default
-                    if (apiKey.getName() == null || "ChatGPT".equals(apiKey.getName())) {
+                    if (apiKey.getName() == null || "OpenAI".equals(apiKey.getName())) {
                         apiKey.setKeyValue(encoded);
                     } else
                         try {

@@ -2,6 +2,8 @@ package com.bloberryconsulting.aicontextsbridge.apis.service.billing;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Aspect;
@@ -19,10 +21,11 @@ import org.springframework.stereotype.Component;
 @Aspect
 @Component
 public class BillingAspect {
-    private static final double TAX = 0.05;
+   // private static final double TAX = 0.05;
+    private static final double TOKEN_RATE = 0.00002; // $0.020 per 1000 tokens
     private final CryptoService cryptoService;
     private final UserRepository userRepository;
-
+    private final Map<String, String> apiKeys = new ConcurrentHashMap<>();   
     public BillingAspect(CryptoService cryptoService, UserRepository userRepository) {
         this.cryptoService = cryptoService;
         this.userRepository = userRepository;
@@ -38,7 +41,11 @@ public class BillingAspect {
 
         String apiURI = apiKeyObject.getUri();
         final String encodedApiKey = apiKeyObject.getKeyValue();
-        final String decodedApiKey = decodeApiKey(apiKeyObject);
+        String decodedApiKey =  apiKeys.get(encodedApiKey);
+        if( decodedApiKey == null) {
+            decodedApiKey = decodeApiKey(apiKeyObject);
+            apiKeys.put(encodedApiKey, decodedApiKey);
+        }   
         apiKeyObject.setKeyValue(decodedApiKey);
         if (apiURI == null) {
             apiURI = apiKeyObject.getUri();
@@ -89,7 +96,7 @@ public class BillingAspect {
     }
 
     private double calculateTotalCost(int tokenCount) {
-        // Simple approximation: 1 token = $0.001
-        return tokenCount * 0.001;
+        // Simple approximation: 1000 token = $0.008
+        return tokenCount * TOKEN_RATE;
     }
 }

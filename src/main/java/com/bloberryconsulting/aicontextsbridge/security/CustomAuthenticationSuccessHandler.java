@@ -57,7 +57,7 @@ public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         if (refererUrl != null && refererUrl.contains("/swagger-ui")) {
             return refererUrl; // Redirect back to Swagger UI
         }
-        return uiUri;//+"/api"; // Redirect to frontend UI
+        return uiUri+"/api"; // Redirect to frontend UI
     }
     
 

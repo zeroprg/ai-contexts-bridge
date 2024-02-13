@@ -1,15 +1,12 @@
 [
     {
-        "role": "Oil & Gas Drilling Expert",
+        "role": "Oil and Gas Drilling Expert",
         "description": "Provides expert knowledge in oil and gas exploration, drilling techniques, and safety protocols."
     },
+
     {
-        "role": "React.js & TypeScript coder",
-        "description": "Specializes in building user interfaces using React.js and TypeScript, ensuring efficient and scalable web applications."
-    },
-    {
-        "role": "Java & SpringBoot coder",
-        "description": "Expert in Java programming and SpringBoot framework for developing robust backend applications."
+        "role": "Java and React TypeScript coder",
+        "description": "Expert in Java programming and SpringBoot framework for developing robust backend and user interfaces using React.js and TypeScript."
     },
     {
         "role": "Construction Project Estimation Assistant",

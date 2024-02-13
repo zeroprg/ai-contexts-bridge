@@ -1,4 +1,4 @@
-package com.bloberryconsulting.aicontextsbridge.apis.service;
+package com.bloberryconsulting.aicontextsbridge.apis.service.openai.chat;
 
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import com.bloberryconsulting.aicontextsbridge.apis.service.ApiService;
 import com.bloberryconsulting.aicontextsbridge.exceptions.APIError;
 import com.bloberryconsulting.aicontextsbridge.model.ApiKey;
 import com.bloberryconsulting.aicontextsbridge.model.Context;
@@ -86,11 +87,13 @@ public class ChatGPTService implements ApiService {
                             JSONObject message = jsonArray.getJSONObject(i);
                             if (message.getString("role").equals("user")) {
                                 String content = message.getString("content");
-                                for (String document : documents) {
-                                    if (!content.contains(document)) {
-                                        previousData = String.join("\n", documents) + "\n" + previousData;
+                                if(content != null && !content.isEmpty()){
+                                    for (String document : documents) {
+                                        if (!content.contains(document)) {
+                                            previousData = String.join("\n", documents) + "\n" + previousData;
+                                        }
                                     }
-                                }
+                                }    
                             }
                         }
                     }
@@ -318,6 +321,6 @@ public class ChatGPTService implements ApiService {
     }
 
     public String getApiId() {
-        return "ChatGPT";
+        return "OpenAI";
     }
 }

@@ -70,7 +70,7 @@ public class HazelcastService {
 
             logger.debug("User '{}' stored in Hazelcast", userToStore.getId());
         } catch (Exception e) {
-            logger.error("Error storing user in Hazelcast: {}", e.getMessage(), e);
+            logger.error("Error storing user in Hazelcast: {}", e.getMessage());
         }
     }
 
@@ -102,7 +102,7 @@ public class HazelcastService {
             hazelcastInstance.getMap(CONTEXT_MAP).put(context.getSessionId() + "_history", conversationHistoryBytes);
             logger.info("Context '{}' updated in Hazelcast", context.getSessionId());
         } catch (IOException e) {
-            logger.error("Error storing context in Hazelcast: {}", e.getMessage(), e);
+            logger.error("Error storing context in Hazelcast: {}", e.getMessage());
         }
     }
 
@@ -115,7 +115,7 @@ public class HazelcastService {
                 conversationHistory = deserializeJsonByteArray(conversationHistoryBytes);
                 
             } catch (Exception e) {
-                logger.error("Error deserializing conversation history for context '{}': {}", sessionId, e.getMessage(), e);
+                logger.error("Error deserializing conversation history for context '{}': {}", sessionId, e.getMessage());
             }
         }
 

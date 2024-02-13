@@ -8,6 +8,8 @@ import com.bloberryconsulting.aicontextsbridge.model.Context;
 import com.google.cloud.speech.v1.RecognitionAudio;
 import com.google.cloud.speech.v1.RecognitionConfig;
 import com.google.protobuf.ByteString;
+
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -25,12 +27,10 @@ import org.slf4j.LoggerFactory;
 import org.json.JSONObject;
 
 @Service
+@Profile("notActiveProfile")
 public class GoogleSpeechToTextService implements ApiService {
-
     private static final Logger logger = LoggerFactory.getLogger(GoogleSpeechToTextService.class);
-
-
-    
+   
     @Override
     public String getResponse(ApiKey apiKey, String data, List<Context> contextHistory) {
         try {
