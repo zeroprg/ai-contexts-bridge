@@ -11,6 +11,7 @@ import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.message.StatusLine;
+import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,15 +20,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 // See docs at https://platform.openai.com/docs/api-reference/audio/createTranslation
-
+@Service
 public class WhisperTranslate {
     private final static String URL = "https://api.openai.com/v1/audio/translations";
     public final static int MAX_ALLOWED_SIZE = 25 * 1024 * 1024;
+
+    private final FileUtils fileUtils;
 
     private final static String KEY = System.getenv("OPENAI_API_KEY");
 
     // Only model available as of Fall 2023 is whisper-1
     private final static String MODEL = "whisper-1";
+
+    public WhisperTranslate(FileUtils fileUtils) {
+        this.fileUtils = fileUtils;
+    }   
 
     public static final String WORD_LIST = String.join(", ",
             List.of("Kousen", "GPT-3", "GPT-4", "DALL-E",
@@ -62,7 +69,7 @@ public class WhisperTranslate {
         }
     }
 
-    public String translate(String fileName) {
+    public String translate(String fileName) throws IOException {
         File file = new File(fileName);
 
         // Collect the translations of each chunk
@@ -94,7 +101,7 @@ public class WhisperTranslate {
         String transcription = String.join(" ", translations);
         String fileNameWithoutPath = fileName.substring(
                 fileName.lastIndexOf("/") + 1);
-        FileUtils.writeTextToFile(transcription,
+        fileUtils.writeTextToFile(transcription,
                 fileNameWithoutPath.replace(".wav", ".translation.txt"));
         return transcription;
     }

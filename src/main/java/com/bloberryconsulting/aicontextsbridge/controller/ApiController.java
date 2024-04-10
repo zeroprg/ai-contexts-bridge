@@ -37,6 +37,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.bloberryconsulting.aicontextsbridge.apis.service.ApiService;
 import com.bloberryconsulting.aicontextsbridge.apis.service.ApiServiceRegistry;
+import com.bloberryconsulting.aicontextsbridge.apis.service.openai.json.Voice;
+import com.bloberryconsulting.aicontextsbridge.apis.service.openai.tts.TextToSpeech;
 import com.bloberryconsulting.aicontextsbridge.apis.service.openai.whisper.WhisperTranscribe;
 import com.bloberryconsulting.aicontextsbridge.exceptions.APIError;
 import com.bloberryconsulting.aicontextsbridge.model.ApiKey;
@@ -69,13 +71,35 @@ public class ApiController {
     private final UserService userService;
     // Assuming whisperTranscribe is a service for transcription
     private final WhisperTranscribe whisperTranscribe;
+    private final TextToSpeech textToSpeech;    
 
     public ApiController(UserRepository userRepository, ApiServiceRegistry apiServiceRegistry, UserService userService,
-            WhisperTranscribe whisperTranscribe) {
+            WhisperTranscribe whisperTranscribe, TextToSpeech textToSpeech) {
         this.userRepository = userRepository;
         this.apiServiceRegistry = apiServiceRegistry;
         this.userService = userService;
         this.whisperTranscribe = whisperTranscribe;
+        this.textToSpeech = textToSpeech;
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_CUSTOMER')")
+    @PostMapping("/tts")
+    @Operation(summary = "Convert text to speech", description = "Receives text and converts it to speech using a specified voice.",
+            tags = { "Text To Speech" }, security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully converted text to speech", content = @Content(mediaType = "application/octet-stream", schema = @Schema(implementation = Byte[].class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input text or voice parameter", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content(mediaType = "application/json"))
+    })
+    public ResponseEntity<?> convertTextToSpeech(@RequestBody PayloadDTO payload ,
+                                                  @RequestParam("voice") Voice voice) {
+        byte[] speechBytes;
+        try {
+            speechBytes = textToSpeech.createAndPlay(payload.getData(), voice);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("Error processing text to speech.");
+        }
+        return ResponseEntity.ok().body(speechBytes);
     }
 
     @PreAuthorize("hasAuthority('ROLE_CUSTOMER')")
@@ -288,35 +312,13 @@ public class ApiController {
             HttpServletRequest request,
             @Parameter(description = "The message to be processed by the API service") @RequestBody PayloadDTO payload) {
 
-        // Retrieve user and session information
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUserId = authentication.getName();
-        User user = userRepository.findUserById(currentUserId);
-        if (user == null) {
-            throw new APIError(HttpStatus.BAD_REQUEST, "No user found for the current user ID: " + currentUserId);
-        } else if (user.getCredit() > 5.0 && !user.getRoles().contains("ROLE_APIKEY_MANAGER")) {
-            throw new APIError(HttpStatus.BAD_REQUEST,
-                    "Donate a few dollars. Credit is overlimit for the current user ID: " + user.getName() + " credit: "
-                            + user.getCredit());
-        }
-        String sessionId = request.getSession(false) != null ? request.getSession().getId() : "No session";
-        if (payload.getSessionId() != null && !payload.getSessionId().isEmpty()) {
-            sessionId = payload.getSessionId();
-        }
 
         // Retrieve context documents associated with the user and session
-        List<Context> contexts = userService.getUserContextById(user, sessionId);
+        List<Context> contexts = getContexts(request, 0.0); // Get the contexts from the request
 
-        if (contexts == null || contexts.isEmpty()) {
-            Context context = new Context();
-            context.setSessionId(sessionId);
-            context.setName("Default");
-            context.setUserId(user.getId());
-            context.setAssistantRoleMessage(DEFAULT_ASSISTANCE_ROLE_MESSAGE);
-            contexts = new ArrayList<Context>();
-            contexts.add(context);
-        }
-
+        String userId =  contexts.get(0).getUserId();
+        User user = userRepository.findUserById(userId);
+       
         // Continue with API key validation and service invocation
         String apiKey = user.getRecentApiId();
         if (apiKey == null) {
@@ -339,10 +341,11 @@ public class ApiController {
     private List<Context> getContexts(HttpServletRequest request, Double credit) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUserId = authentication.getName();
-        User user = userRepository.findUserById(currentUserId);
+        User user = userRepository.findUserById(currentUserId);        
+
         final Double totalCredit = credit + user.getCredit();
 
-        if (totalCredit > 1.0 && !user.getRoles().contains("ROLE_APIKEY_MANAGER")) {
+        if (totalCredit > 0.10 && !user.getRoles().contains("ROLE_APIKEY_MANAGER")) {
             throw new APIError(HttpStatus.BAD_REQUEST,
                     "Donate a few dollars. Credit is overlimit for the current user ID: " + user.getName() + " credit: "
                             + user.getCredit());
@@ -354,6 +357,16 @@ public class ApiController {
         String sessionId = request.getSession(false) != null ? request.getSession().getId() : "No session";
         // Retrieve context documents associated with the user and session
         List<Context> contexts = userService.getUserContextById(user, sessionId);
+
+        if (contexts == null || contexts.isEmpty()) {
+            Context context = new Context();
+            context.setSessionId(sessionId);
+            context.setName("Default");
+            context.setUserId(user.getId());
+            context.setAssistantRoleMessage(DEFAULT_ASSISTANCE_ROLE_MESSAGE);
+            contexts = new ArrayList<Context>();
+            contexts.add(context);
+        }
 
         return contexts;
     }

@@ -13,14 +13,25 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Service;
+
 // https://platform.openai.com/docs/tutorials/meeting-minutes
 // Transcribe and analyze meeting minutes tutorial
+@Service
 public class WhisperTutorial {
 
-    private final WhisperTranscribe whisperTranscribe = new WhisperTranscribe();
+    private final WhisperTranscribe whisperTranscribe;
+
     private final ChatGPT chatGPT = new ChatGPT(null,null);
 
-    public void processMeetingMinutes() {
+    private final FileUtils fileUtils;
+
+    public WhisperTutorial(FileUtils fileUtils , WhisperTranscribe whisperTranscribe) { 
+        this.fileUtils = fileUtils;
+        this.whisperTranscribe = whisperTranscribe; 
+    }   
+
+    public void processMeetingMinutes() throws IOException {
         // Transcribe audio, or load transcription if it already exists
         String transcription = getTranscription("EarningsCall");
 
@@ -44,8 +55,15 @@ public class WhisperTutorial {
         System.out.printf("Elapsed time: %.3f seconds%n", (endTime - startTime) / 1e9);
 
         responseMap.forEach((name, response) ->
-                FileUtils.writeTextToFile(response, name + ".txt"));
-        FileUtils.writeWordDocument(responseMap);
+                {
+                    try {
+                        fileUtils.writeTextToFile(response, name + ".txt");
+                    } catch (IOException e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    }
+                });
+        fileUtils.writeWordDocument(responseMap);
     }
 
     public String getResponse(String prompt, String transcription) {
@@ -55,7 +73,7 @@ public class WhisperTutorial {
     }
 
     @SuppressWarnings("SameParameterValue")
-    public String getTranscription(String fileName) {
+    public String getTranscription(String fileName) throws IOException {
         Path transcriptionFilePath = Paths.get(FileUtils.TEXT_RESOURCES_PATH, fileName + ".txt");
         Path audioFilePath = Paths.get(FileUtils.AUDIO_RESOURCES_PATH, fileName + ".wav");
 

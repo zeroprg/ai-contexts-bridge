@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import com.bloberryconsulting.aicontextsbridge.apis.service.openai.whisper.WhisperSpeechTotTextService;
+import com.bloberryconsulting.aicontextsbridge.apis.service.openai.whisper.DefaultServices;
 import com.bloberryconsulting.aicontextsbridge.apis.service.tools.AudioProcessor;
 import com.bloberryconsulting.aicontextsbridge.exceptions.APIError;
 
@@ -47,7 +47,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         if (isStopStreamingMessage(clientMessage)) {
             // Process any remaining audio chunks before stopping the stream
             Future<?> future = audioProcessor.processRemainingChunks(session, languageCode,
-                    WhisperSpeechTotTextService.SERVICE_IDENTIFIER);
+                    DefaultServices.SERVICE_IDENTIFIER);
             // Let APIError propagate if it occurs
             waitForFutureAndHandleExceptions(future); // This can throw InterruptedException or ExecutionException
 
@@ -56,7 +56,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
             String base64Audio = jsonData.optString("audio");
             if (!base64Audio.isEmpty()) {
                 Future<?> future = audioProcessor.processAudioChunks(session, languageCode, List.of(base64Audio),
-                WhisperSpeechTotTextService.SERVICE_IDENTIFIER);
+                DefaultServices.SERVICE_IDENTIFIER);
                 // Let APIError propagate if it occurs
                 waitForFutureAndHandleExceptions(future);
             }

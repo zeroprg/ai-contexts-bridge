@@ -57,8 +57,14 @@ public class WhisperTranscribe {
     public final static int MAX_ALLOWED_SIZE = 25 * 1024 * 1024;
     public final static int MAX_CHUNK_SIZE_BYTES = 20 * 1024 * 1024;
 
+    private final FileUtils fileUtils;
+
     private String apIKey = null;
     private String terminologyPrompt;
+
+    public WhisperTranscribe(FileUtils fileUtils) {
+        this.fileUtils = fileUtils;
+    }
 
     public void setApiKey(String key) {
         this.apIKey = key;
@@ -121,7 +127,7 @@ public class WhisperTranscribe {
         }
     }
 
-    public String transcribe(Path filePath) {
+    public String transcribe(Path filePath) throws IOException {
         logger.debug("Transcribing " + filePath);
         File file = filePath.toFile();
 
@@ -168,7 +174,7 @@ public class WhisperTranscribe {
         // Append .txt extension to the base name
         String newFileName = baseName + ".txt";
         
-        FileUtils.writeTextToFile(transcription, newFileName);
+        fileUtils.writeTextToFile(transcription, newFileName);
         
         logger.debug(transcription);
         return transcription;
